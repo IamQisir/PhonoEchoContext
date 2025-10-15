@@ -35,6 +35,7 @@ def save_pronunciation_assessment(pronunciation_result, filepath):
     except Exception as e:
         st.error(f"Error saving pronunciation assessment: {e}")
 
+@DeprecationWarning
 def get_ai_feedback(client, user_input):
     prompt = f"ユーザーの発音に関するフィードバックを提供してください: {user_input}"
     try:
@@ -51,19 +52,6 @@ def get_ai_feedback(client, user_input):
         st.error(f"Error getting AI feedback: {e}")
         return None
 
-# test functions
-def test_ai_feedback():
-    client = init_openai_client()
-    if client:
-        user_input = "Good morning? Can you tell me who you are?"
-        feedback = get_ai_feedback(client, user_input)
-        if feedback:
-            st.write("AI Feedback:")
-            st.write_stream(feedback)
-        else:
-            st.write("No feedback received.")
-    else:
-        st.write("OpenAI client initialization failed.")
 
 def test_pronunciation_assessment():
     from initialize import initialize_azure
