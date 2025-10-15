@@ -5,12 +5,18 @@ import librosa
 import time
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import streamlit as st
 import soundfile as sf
 import azure.cognitiveservices.speech as speechsdk
 from datetime import datetime
 import altair as alt
+import matplotlib.pyplot as plt
+from matplotlib.patches import Circle, RegularPolygon
+from matplotlib.path import Path
+from matplotlib.projections import register_projection
+from matplotlib.projections.polar import PolarAxes
+from matplotlib.spines import Spine
+from matplotlib.transforms import Affine2D
 
 plt.rcParams["font.family"] = "MS Gothic"
 
@@ -41,207 +47,6 @@ def get_color(score):
     else:
         # needing significant improvement (0-39)
         return "#ff0000"  # red
-
-
-def create_radar_chart(pronunciation_result):
-    """
-    Creates an enhanced radar chart for pronunciation assessment visualization.
-
-    Args:
-        pronunciation_result (dict): Dictionary containing pronunciation assessment data
-
-    Returns:
-        matplotlib.figure.Figure: The generated radar chart
-    """
-    # Extract overall assessment
-    overall_assessment = pronunciation_result["NBest"][0]["PronunciationAssessment"]
-
-    # Define categories with Japanese labels
-    categories = {
-        "総合": "PronScore",
-        "正確性": "AccuracyScore",
-        "流暢性": "FluencyScore",
-        "完全性": "CompletenessScore",
-        "韻律": "ProsodyScore",
-    }
-
-    # Get scores
-    scores = [overall_assessment.get(categories[cat], 0) for cat in categories]
-
-    # Create figure and polar axis
-    fig, ax = plt.subplots(figsize=(12, 12), subplot_kw=dict(projection="polar"))
-
-    # Calculate angles for each category
-    angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False)
-
-    # Close the plot by appending first values
-    scores += scores[:1]
-    angles = np.concatenate((angles, [angles[0]]))
-
-    # Plot data
-    ax.plot(
-        angles, scores, "o-", linewidth=3, label="Score", color="#2E86C1", markersize=10
-    )
-    ax.fill(angles, scores, alpha=0.25, color="#2E86C1")
-
-    # Set chart properties
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(categories.keys(), size=20)
-
-    # Add gridlines and adjust their style
-    ax.set_rgrids(
-        [20, 40, 60, 80, 100],
-        labels=["20", "40", "60", "80", "100"],
-        angle=0,
-        fontsize=14,
-    )  # Increased from 10 to 14
-
-    # Add score labels at each point with larger font
-    for angle, score in zip(angles[:-1], scores[:-1]):
-        ax.text(
-            angle,
-            score + 5,
-            f"{score:.1f}",
-            ha="center",
-            va="center",
-            fontsize=20,  # Increased font size for score labels
-            fontweight="bold",
-        )
-
-    # Customize grid
-    ax.grid(True, linestyle="--", alpha=0.7, linewidth=1.5)  # Increased grid line width
-
-    # Set chart limits and direction
-    ax.set_ylim(0, 100)
-    ax.set_theta_direction(-1)  # Clockwise
-    ax.set_theta_offset(np.pi / 2)  # Start from top
-
-    # Add title with larger font
-    plt.title(
-        "発音評価レーダーチャート\nPronunciation Assessment Radar Chart",
-        pad=20,
-        size=20,
-        fontweight="bold",
-    )  # Increased from 14 to 18
-
-    # Add subtle background color
-    ax.set_facecolor("#F8F9F9")
-    fig.patch.set_facecolor("white")
-
-    # Adjust layout
-    plt.tight_layout()
-
-    return fig
-
-def create_error_table(pronunciation_result):
-    """
-    Analyzes pronunciation assessment result and creates a DataFrame of error types.
-    Displays the error statistics using Streamlit.
-    Only includes words with pronunciation errors (excludes correctly pronounced words).
-    
-    Args:
-        pronunciation_result (dict): Dictionary containing pronunciation assessment data
-    
-    Returns:
-        pd.DataFrame: DataFrame containing error type statistics
-    """
-    # Extract words from pronunciation result
-    words = pronunciation_result["NBest"][0]["Words"]
-
-    # Initialize error type counters (excluding "None")
-    error_counts = {
-        "Mispronunciation": 0,  # Incorrect pronunciation
-        "Omission": 0,       # Word was skipped
-        "Insertion": 0,      # Extra word added (not in reference)
-        "UnexpectedBreak": 0,  # Unexpected pause
-        "MissingBreak": 0,   # Missing pause
-        "Monotone": 0  # Monotone prosody
-    }
-
-    # Count error types at word level (skip words with no errors)
-    for word in words:
-        if "PronunciationAssessment" in word:
-            error_type = word["PronunciationAssessment"].get("ErrorType", "None")
-            # Only count if it's an actual error (not "None")
-            if error_type in error_counts and error_type != "None":
-                error_counts[error_type] += 1
-
-    # Create DataFrame from error counts (exclude zero counts)
-    error_data = {
-        "エラータイプ (Error Type)": [],
-        "カウント (Count)": []
-    }
-
-    # Map error types to Japanese labels (excluding "None")
-    error_labels = {
-        "Mispronunciation": "不適切な発音",
-        "Omission": "省略",
-        "Insertion": "挿入",
-        "UnexpectedBreak": "予期しない区切り",
-        "MissingBreak": "区切りの欠落",
-        "Monotone": "単調な韻律"
-    }
-
-    for error_type, count in error_counts.items():
-        if count > 0:  # Only include error types that occurred
-            error_data["エラータイプ (Error Type)"].append(error_labels[error_type])
-            error_data["カウント (Count)"].append(count)
-
-    # Create DataFrame
-    df = pd.DataFrame(error_data)
-
-    return df
-
-def create_score_badge(score):
-    """
-    Creates an HTML badge to display a pronunciation score with color coding.
-    
-    Args:
-        score (float or int): Pronunciation score (0-100)
-    
-    Returns:
-        str: HTML string for the score badge
-    """
-    if score is None:
-        score = 0
-    
-    # Get color based on score
-    color = get_color(score)
-    
-    # Determine text color for contrast
-    text_color = 'white' if score < 80 else 'black'
-    
-    # Create badge HTML
-    badge_html = f"""
-    <style>
-        .score-badge {{
-            display: inline-block;
-            padding: 20px 30px;
-            border-radius: 15px;
-            font-size: 48px;
-            font-weight: bold;
-            text-align: center;
-            background-color: {color};
-            color: {text_color};
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            min-width: 150px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-        }}
-        .badge-label {{
-            font-size: 16px;
-            font-weight: normal;
-            display: block;
-            margin-top: 5px;
-            opacity: 0.9;
-        }}
-    </style>
-    <div class="score-badge">
-        {int(score)}
-        <span class="badge-label">/ 100</span>
-    </div>
-    """
-    
-    return badge_html
 
 def create_waveform_plot(audio_file, pronunciation_result):
     """
@@ -641,21 +446,226 @@ def test_syllable_table():
     html_table = create_syllable_table(result)
     st.html(html_table)
 
-def test_error_table():
-    with open("asset/1/history/レッソン2-2024-12-24_16-43-01.json", "r", encoding="utf-8") as f:
-        result = json.load(f)
-    st.subheader("Error Type Statistics")
-    df = create_error_table(result)
 
-def test_score_badge():
-    with open("asset/1/history/レッソン2-2024-12-24_16-43-01.json", "r", encoding="utf-8") as f:
-        result = json.load(f)
-    overall_score = result["NBest"][0]["PronunciationAssessment"]["PronScore"]
-    st.subheader("Pronunciation Score Badge")
-    st.html(create_score_badge(overall_score))
 
-# Run tests
-# test_radar_chart()
-# test_syllable_table()
-test_error_table()
-test_score_badge()
+def radar_factory(num_vars, frame="circle"):
+    """
+    Create a radar chart with `num_vars` Axes.
+
+    This function creates a RadarAxes projection and registers it.
+
+    Parameters
+    ----------
+    num_vars : int
+        Number of variables for radar chart.
+    frame : {'circle', 'polygon'}
+        Shape of frame surrounding Axes.
+
+    """
+    # calculate evenly-spaced axis angles
+    theta = np.linspace(0, 2 * np.pi, num_vars, endpoint=False)
+
+    class RadarTransform(PolarAxes.PolarTransform):
+
+        def transform_path_non_affine(self, path):
+            # Paths with non-unit interpolation steps correspond to gridlines,
+            # in which case we force interpolation (to defeat PolarTransform's
+            # autoconversion to circular arcs).
+            if path._interpolation_steps > 1:
+                path = path.interpolated(num_vars)
+            return Path(self.transform(path.vertices), path.codes)
+
+    class RadarAxes(PolarAxes):
+
+        name = "radar"
+        PolarTransform = RadarTransform
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            # rotate plot such that the first axis is at the top
+            self.set_theta_zero_location("N")
+
+        def fill(self, *args, closed=True, **kwargs):
+            """Override fill so that line is closed by default"""
+            return super().fill(closed=closed, *args, **kwargs)
+
+        def plot(self, *args, **kwargs):
+            """Override plot so that line is closed by default"""
+            lines = super().plot(*args, **kwargs)
+            for line in lines:
+                self._close_line(line)
+
+        def _close_line(self, line):
+            x, y = line.get_data()
+            if x[0] != x[-1]:
+                x = np.append(x, x[0])
+                y = np.append(y, y[0])
+                line.set_data(x, y)
+
+        def set_varlabels(self, labels):
+            self.set_thetagrids(np.degrees(theta), labels)
+
+        def _gen_axes_patch(self):
+            if frame == "circle":
+                return Circle((0.5, 0.5), 0.5)
+            elif frame == "polygon":
+                return RegularPolygon((0.5, 0.5), num_vars, radius=0.5, edgecolor="k")
+            else:
+                raise ValueError("Unknown value for 'frame': %s" % frame)
+
+        def _gen_axes_spines(self):
+            if frame == "circle":
+                return super()._gen_axes_spines()
+            elif frame == "polygon":
+                spine = Spine(
+                    axes=self,
+                    spine_type="circle",
+                    path=Path.unit_regular_polygon(num_vars),
+                )
+                spine.set_transform(
+                    Affine2D().scale(0.5).translate(0.5, 0.5) + self.transAxes
+                )
+                return {"polar": spine}
+            else:
+                raise ValueError("Unknown value for 'frame': %s" % frame)
+
+    register_projection(RadarAxes)
+    return theta
+
+
+def create_radar_chart(pronunciation_result):
+    """
+    Creates an enhanced pentagon radar chart for pronunciation assessment visualization.
+    Uses proper pentagon frame without circular border.
+
+    Args:
+        pronunciation_result (dict): Dictionary containing pronunciation assessment data
+
+    Returns:
+        matplotlib.figure.Figure: The generated radar chart
+    """
+    # Extract overall assessment
+    overall_assessment = pronunciation_result["NBest"][0]["PronunciationAssessment"]
+
+    # Define categories with Japanese labels
+    categories = {
+        "総合": "PronScore",
+        "正確性": "AccuracyScore",
+        "流暢性": "FluencyScore",
+        "完全性": "CompletenessScore",
+        "韻律": "ProsodyScore",
+    }
+
+    # Get scores (normalize to 0-1 range for radar chart)
+    scores = [overall_assessment.get(categories[cat], 0) / 100.0 for cat in categories]
+    labels = list(categories.keys())
+
+    # Number of variables
+    N = len(categories)
+
+    # Create radar chart with pentagon frame
+    theta = radar_factory(N, frame="polygon")
+
+    # Create figure with wider, lower aspect ratio: 800px x 200px (8.0 x 2.0 inches at 100 DPI)
+    fig, ax = plt.subplots(figsize=(8.0, 2.0), subplot_kw=dict(projection="radar"))
+    fig.subplots_adjust(top=0.92, bottom=0.08, left=0.12, right=0.88)
+
+    # Set radial gridlines with WHITE text (reduced font size)
+    ax.set_rgrids(
+        [0.2, 0.4, 0.6, 0.8, 1.0],
+        labels=["20", "40", "60", "80", "100"],
+        angle=0,
+        fontsize=7,  # Reduced from 9
+        color="white",
+    )
+
+    # Add inner dashed pentagon for reference (e.g., at 60% level)
+    reference_level = 0.6
+    reference_values = [reference_level] * N
+    ax.plot(
+        theta,
+        reference_values,
+        linestyle="--",
+        linewidth=1.5,
+        color="#FF6B6B",
+        alpha=0.6,
+    )
+    ax.fill(theta, reference_values, alpha=0.05, color="#FF6B6B")
+
+    # Plot the actual scores
+    ax.plot(
+        theta,
+        scores,
+        "o-",
+        linewidth=3,
+        color="#1E88E5",
+        markersize=10,
+        markerfacecolor="#1E88E5",
+        markeredgecolor="white",
+        markeredgewidth=2,
+    )
+    ax.fill(theta, scores, alpha=0.25, color="#1E88E5")
+
+    # Set labels with WHITE color (reduced font size)
+    ax.set_varlabels(labels)
+    # Set label font size and color
+    for label in ax.get_xticklabels():
+        label.set_fontsize(12)  # Reduced from 16
+        label.set_fontweight("bold")
+        label.set_color("white")
+
+    # Add score values INSIDE the pentagon with smart positioning to avoid overlap
+    for idx, (angle, score, label) in enumerate(zip(theta, scores, labels)):
+        actual_score = score * 100  # Convert back to 0-100 scale
+
+        # Position scores FULLY INSIDE the pentagon - deeper negative offsets
+        if idx == 0:  # 総合 (top)
+            offset = -0.18
+            va = "center"
+        elif idx == 1:  # 正確性 (top-right)
+            offset = -0.16
+            va = "center"
+        elif idx == 2:  # 流暢性 (bottom-right)
+            offset = -0.16
+            va = "center"
+        elif idx == 3:  # 完全性 (bottom-left)
+            offset = -0.16
+            va = "center"
+        else:  # 韻律 (top-left)
+            offset = -0.16
+            va = "center"
+
+        # Calculate position INSIDE the pentagon with better constraint
+        x = angle
+        y = max(0.20, score + offset)  # Increased minimum distance from center
+
+        ax.text(
+            x,
+            y,
+            f"{actual_score:.0f}",
+            ha="center",
+            va=va,
+            fontsize=9,  # Reduced from 12
+            fontweight="bold",
+            color="white",
+            bbox=dict(
+                boxstyle="round,pad=0.3",  # Slightly reduced padding
+                facecolor="#1E88E5",
+                edgecolor="white",
+                linewidth=1.5,  # Slightly thinner border
+            ),
+            transform=ax.transData,
+            zorder=10,
+        )
+    # Style improvements - Light gray background
+    ax.set_facecolor("#0E1117")
+    fig.patch.set_facecolor("#0E1117")
+
+    # Customize grid appearance
+    ax.grid(True, linestyle="--", alpha=0.3, linewidth=1, color="#CCCCCC")
+
+    # Set spine color
+    ax.spines['polar'].set_edgecolor('white')
+    ax.spines['polar'].set_linewidth(1.5)
+
+    return fig

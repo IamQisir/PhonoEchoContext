@@ -1,2 +1,3 @@
 .streamlit
 asset
+__pycache__

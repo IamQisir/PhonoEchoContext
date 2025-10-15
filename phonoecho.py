@@ -4,7 +4,7 @@ from initialize import reset_page_padding, initialize_session_state, init_openai
 from data_loader import load_video, load_text
 from ai_feedback import get_ai_feedback, get_pronunciation_assessment, save_pronunciation_assessment
 from audio_process import save_audio_to_file
-from chart import create_radar_chart, create_error_table
+from chart import create_radar_chart
 
 reset_page_padding()
 
@@ -34,48 +34,29 @@ with tabs[0]:
             if submitted:
                 # Get pronunciation assessment
                 st.session_state.practice_times += 1
-                audio_file_path = f"asset/{user}/history/{lesson}-{st.session_state.practice_times}.wav"
-                save_audio_to_file(audio_bytes_io, filename=audio_file_path)
-                pronunciation_assessment_result = get_pronunciation_assessment(user, st.session_state.pronunciation_config, reference_text, audio_file_path)
-                save_pronunciation_assessment(pronunciation_assessment_result, f"asset/{user}/history/{lesson}-{st.session_state.practice_times}_assessment.json")
+                # audio_file_path = f"asset/{user}/history/{lesson}-{st.session_state.practice_times}.wav"
+                audio_file_path = f"asset/{user}/history/{lesson}-{1}.wav"
+                # save_audio_to_file(audio_bytes_io, filename=audio_file_path)
+                # pronunciation_assessment_result = get_pronunciation_assessment(user, st.session_state.pronunciation_config, reference_text, audio_file_path)
+                import json
+                with open("asset/1/history/test1.json", "rb") as f:
+                    pronunciation_assessment_result = json.load(f)
+                # save_pronunciation_assessment(pronunciation_assessment_result, f"asset/{user}/history/{lesson}-{st.session_state.practice_times}.json")
+
+                # Analyze the result and get AI feedback
+                # 1. Radar chart
+                radar_chart = create_radar_chart(pronunciation_assessment_result)
+                st.session_state["feedback"]["radar_chart"] = radar_chart
+                # 2. AI feedback
 
     with cols[1]:
         with st.container(height=400, horizontal_alignment="center", vertical_alignment="center"):
-            if st.session_state["feedback"]["result_json"] is None:
+            if st.session_state["feedback"]["radar_chart"] is None:
                 st.html("<h1 style='text-align: center;'>レーダーチャート</h1>")
             else:
-                radar_chart = create_radar_chart(pronunciation_assessment_result)
-                st.session_state["feedback"]["radar_chart"] = radar_chart
-                st.pyplot(radar_chart)
-        
-        inner_cols1 = st.columns(2)
-        with inner_cols1[0]:
-            with st.container(height=150, horizontal_alignment="center", vertical_alignment="center"):
-                if st.session_state["feedback"]["errors_table"] is None:
-                    st.html("<h2 style='text-align: center;'>発音誤りの統計表</h2>")
-                else:
-                    error_table = create_error_table(pronunciation_assessment_result)
-                    st.session_state["feedback"]["errors_table"] = error_table
-                    st.dataframe(
-                        error_table,
-                        use_container_width=True,
-                        hide_index=True,
-                        column_config={
-                            "エラータイプ (Error Type)": st.column_config.TextColumn(
-                                width="large"
-                            ),
-                            "カウント (Count)": st.column_config.NumberColumn(
-                                width="small",
-                                format="%d"
-                            )
-                        }
-                    )
+                st.pyplot(radar_chart, width=450)
 
-        with inner_cols1[1]:
-            with st.container(height=150, horizontal_alignment="center", vertical_alignment="center"):
-                st.html("<h2 style='text-align: center;'>発音スコアのバッジ</h2>")
-
-        with st.container(height=350, horizontal_alignment="center", vertical_alignment="center"):
+        with st.container(height=450, horizontal_alignment="center", vertical_alignment="center"):
             st.html("<h2 style='text-align: center;'>AIフィードバック</h2>")
 
 with tabs[1]:
