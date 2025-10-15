@@ -2,7 +2,9 @@ import streamlit as st
 from streamlit_advanced_audio import audix, CustomizedRegion, RegionColorOptions
 from initialize import reset_page_padding, initialize_session_state, init_openai_client
 from data_loader import load_video, load_text
-from ai_feedback import get_ai_feedback
+from ai_feedback import get_ai_feedback, get_pronunciation_assessment, save_pronunciation_assessment
+from audio_process import save_audio_to_file
+from chart import create_radar_chart, create_error_table
 
 reset_page_padding()
 
@@ -23,28 +25,56 @@ with tabs[0]:
     with cols[0]:
         # load video and text and display
         load_video(user, lesson)
-        load_text(user, lesson)
+        reference_text = load_text(user, lesson)
 
         with st.form("audio_input"):
             audio_bytes_io = st.audio_input(f"音声を録音してみよう", sample_rate=48000)
 
             submitted = st.form_submit_button("フィードバックをもらおう！")
             if submitted:
-                # TODO: Analysis
-                st.write("音声を送信しました")
+                # Get pronunciation assessment
+                st.session_state.practice_times += 1
+                audio_file_path = f"asset/{user}/history/{lesson}-{st.session_state.practice_times}.wav"
+                save_audio_to_file(audio_bytes_io, filename=audio_file_path)
+                pronunciation_assessment_result = get_pronunciation_assessment(user, st.session_state.pronunciation_config, reference_text, audio_file_path)
+                save_pronunciation_assessment(pronunciation_assessment_result, f"asset/{user}/history/{lesson}-{st.session_state.practice_times}_assessment.json")
 
     with cols[1]:
         with st.container(height=400, horizontal_alignment="center", vertical_alignment="center"):
-            st.html("<h1 style='text-align: center;'>レーダーチャート</h1>")
-
+            if st.session_state["feedback"]["result_json"] is None:
+                st.html("<h1 style='text-align: center;'>レーダーチャート</h1>")
+            else:
+                radar_chart = create_radar_chart(pronunciation_assessment_result)
+                st.session_state["feedback"]["radar_chart"] = radar_chart
+                st.pyplot(radar_chart)
+        
         inner_cols1 = st.columns(2)
         with inner_cols1[0]:
             with st.container(height=150, horizontal_alignment="center", vertical_alignment="center"):
-                st.html("<h2 style='text-align: center;'>発音誤りの統計表</h2>")
+                if st.session_state["feedback"]["errors_table"] is None:
+                    st.html("<h2 style='text-align: center;'>発音誤りの統計表</h2>")
+                else:
+                    error_table = create_error_table(pronunciation_assessment_result)
+                    st.session_state["feedback"]["errors_table"] = error_table
+                    st.dataframe(
+                        error_table,
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            "エラータイプ (Error Type)": st.column_config.TextColumn(
+                                width="large"
+                            ),
+                            "カウント (Count)": st.column_config.NumberColumn(
+                                width="small",
+                                format="%d"
+                            )
+                        }
+                    )
+
         with inner_cols1[1]:
             with st.container(height=150, horizontal_alignment="center", vertical_alignment="center"):
                 st.html("<h2 style='text-align: center;'>発音スコアのバッジ</h2>")
-        
+
         with st.container(height=350, horizontal_alignment="center", vertical_alignment="center"):
             st.html("<h2 style='text-align: center;'>AIフィードバック</h2>")
 

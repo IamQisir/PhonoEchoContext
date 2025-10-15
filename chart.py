@@ -133,6 +133,115 @@ def create_radar_chart(pronunciation_result):
 
     return fig
 
+def create_error_table(pronunciation_result):
+    """
+    Analyzes pronunciation assessment result and creates a DataFrame of error types.
+    Displays the error statistics using Streamlit.
+    Only includes words with pronunciation errors (excludes correctly pronounced words).
+    
+    Args:
+        pronunciation_result (dict): Dictionary containing pronunciation assessment data
+    
+    Returns:
+        pd.DataFrame: DataFrame containing error type statistics
+    """
+    # Extract words from pronunciation result
+    words = pronunciation_result["NBest"][0]["Words"]
+
+    # Initialize error type counters (excluding "None")
+    error_counts = {
+        "Mispronunciation": 0,  # Incorrect pronunciation
+        "Omission": 0,       # Word was skipped
+        "Insertion": 0,      # Extra word added (not in reference)
+        "UnexpectedBreak": 0,  # Unexpected pause
+        "MissingBreak": 0,   # Missing pause
+        "Monotone": 0  # Monotone prosody
+    }
+
+    # Count error types at word level (skip words with no errors)
+    for word in words:
+        if "PronunciationAssessment" in word:
+            error_type = word["PronunciationAssessment"].get("ErrorType", "None")
+            # Only count if it's an actual error (not "None")
+            if error_type in error_counts and error_type != "None":
+                error_counts[error_type] += 1
+
+    # Create DataFrame from error counts (exclude zero counts)
+    error_data = {
+        "エラータイプ (Error Type)": [],
+        "カウント (Count)": []
+    }
+
+    # Map error types to Japanese labels (excluding "None")
+    error_labels = {
+        "Mispronunciation": "不適切な発音",
+        "Omission": "省略",
+        "Insertion": "挿入",
+        "UnexpectedBreak": "予期しない区切り",
+        "MissingBreak": "区切りの欠落",
+        "Monotone": "単調な韻律"
+    }
+
+    for error_type, count in error_counts.items():
+        if count > 0:  # Only include error types that occurred
+            error_data["エラータイプ (Error Type)"].append(error_labels[error_type])
+            error_data["カウント (Count)"].append(count)
+
+    # Create DataFrame
+    df = pd.DataFrame(error_data)
+
+    return df
+
+def create_score_badge(score):
+    """
+    Creates an HTML badge to display a pronunciation score with color coding.
+    
+    Args:
+        score (float or int): Pronunciation score (0-100)
+    
+    Returns:
+        str: HTML string for the score badge
+    """
+    if score is None:
+        score = 0
+    
+    # Get color based on score
+    color = get_color(score)
+    
+    # Determine text color for contrast
+    text_color = 'white' if score < 80 else 'black'
+    
+    # Create badge HTML
+    badge_html = f"""
+    <style>
+        .score-badge {{
+            display: inline-block;
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            background-color: {color};
+            color: {text_color};
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 150px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }}
+        .badge-label {{
+            font-size: 16px;
+            font-weight: normal;
+            display: block;
+            margin-top: 5px;
+            opacity: 0.9;
+        }}
+    </style>
+    <div class="score-badge">
+        {int(score)}
+        <span class="badge-label">/ 100</span>
+    </div>
+    """
+    
+    return badge_html
 
 def create_waveform_plot(audio_file, pronunciation_result):
     """
@@ -531,4 +640,22 @@ def test_syllable_table():
         result = json.load(f)
     html_table = create_syllable_table(result)
     st.html(html_table)
-test_syllable_table()
+
+def test_error_table():
+    with open("asset/1/history/レッソン2-2024-12-24_16-43-01.json", "r", encoding="utf-8") as f:
+        result = json.load(f)
+    st.subheader("Error Type Statistics")
+    df = create_error_table(result)
+
+def test_score_badge():
+    with open("asset/1/history/レッソン2-2024-12-24_16-43-01.json", "r", encoding="utf-8") as f:
+        result = json.load(f)
+    overall_score = result["NBest"][0]["PronunciationAssessment"]["PronScore"]
+    st.subheader("Pronunciation Score Badge")
+    st.html(create_score_badge(overall_score))
+
+# Run tests
+# test_radar_chart()
+# test_syllable_table()
+test_error_table()
+test_score_badge()

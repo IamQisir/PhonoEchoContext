@@ -33,7 +33,7 @@ def init_openai_client():
         st.error(f"Error initializing OpenAI client: {e}")
     return client
 
-def initialize_azure(txt:str):
+def initialize_azure():
     """Initialize Azure Speech client."""
     speech_key, service_region = (
         st.secrets["Azure_Speech"]["SPEECH_KEY"],
@@ -41,7 +41,7 @@ def initialize_azure(txt:str):
     )
 
     pronunciation_config = speechsdk.PronunciationAssessmentConfig(
-        reference_text=txt,
+        reference_text="",
         grading_system=speechsdk.PronunciationAssessmentGradingSystem.HundredMark,
         granularity=speechsdk.PronunciationAssessmentGranularity.Phoneme,
         enable_miscue=False)

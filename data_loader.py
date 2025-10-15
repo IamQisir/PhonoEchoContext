@@ -12,5 +12,6 @@ def load_text(user:int, lesson:int):
     with open(f"asset/{user}/video_text/{lesson}.txt", "r", encoding="utf-8") as f:
         txt = f.read()
     st.html(f"<h2 style='text-align: center; color: white;'>{txt}</h2>")
+    return txt
 
 
