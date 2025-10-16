@@ -71,5 +71,4 @@ def initialize_session_state(session_state, user:int, lesson: int):
             "waveform_plot": None,
             "syllable_table": None,
             "pron_score": None,
-            "errors_stats": None,
         }

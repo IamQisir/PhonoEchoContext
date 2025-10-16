@@ -1,18 +1,17 @@
-"""
-SIMPLIFIED version - No complex CAPT pipeline!
-Just extract errors and let AI do everything.
-"""
-
 import streamlit as st
 from streamlit_advanced_audio import audix, CustomizedRegion, RegionColorOptions
 from initialize import reset_page_padding, initialize_session_state
 from data_loader import load_video, load_text
-from ai_feedback import get_pronunciation_assessment, save_pronunciation_assessment
+from ai_feedback import (
+    get_pronunciation_assessment,
+    save_pronunciation_assessment,
+    generate_ai_feedback_streaming,
+)
 from audio_process import save_audio_to_file
 from chart import create_radar_chart
 
 # NEW: Use simple AI feedback - no complex pipeline!
-from simple_ai_feedback import generate_simple_ai_feedback
+from ai_feedback import generate_ai_feedback
 
 reset_page_padding()
 
@@ -23,15 +22,6 @@ with st.sidebar:
 
 # Initialize session state
 initialize_session_state(st.session_state, user, lesson)
-
-if "ai_feedback_text" not in st.session_state:
-    st.session_state.ai_feedback_text = None
-
-if "previous_errors" not in st.session_state:
-    st.session_state.previous_errors = None
-
-if "current_assessment_result" not in st.session_state:
-    st.session_state.current_assessment_result = None
 
 tabs = st.tabs(["ラーニング", "発音の可視化", "まとめ"])
 
@@ -71,7 +61,7 @@ with tabs[0]:
 
                 # ========== STEP 2: GENERATE AI FEEDBACK WITH STREAMING ==========
                 # Store attempt info for comparison
-                from simple_ai_feedback import extract_pronunciation_errors
+                from ai_feedback import extract_pronunciation_errors
                 info = extract_pronunciation_errors(pronunciation_assessment_result)
                 
                 # Mark that AI feedback is being generated
@@ -107,12 +97,11 @@ with tabs[0]:
                 st.markdown("---")
                 
                 # Generate AI feedback with streaming
-                from simple_ai_feedback import generate_simple_ai_feedback_streaming
                 
                 # Use stored assessment result
                 if st.session_state.current_assessment_result:
                     # Stream the feedback
-                    st.write_stream(generate_simple_ai_feedback_streaming(
+                    st.write_stream(generate_ai_feedback_streaming(
                         client=st.session_state.openai_client,
                         azure_json=st.session_state.current_assessment_result,
                         reference_text=reference_text,
