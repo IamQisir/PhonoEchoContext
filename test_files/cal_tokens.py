@@ -1,0 +1,35 @@
+import tiktoken
+
+
+# Choose the model's tokenizer
+encoding = tiktoken.encoding_for_model("gpt-5")
+
+# Example input text (e.g., the transcript or pronunciation result)
+text = """
+[
+    {
+        "role": "system",
+        "content": "You are a helpful English pronunciation assistant. Personalize your feedback based on the user's pronunciation assessment data."
+    },
+    {
+        "role": "user",
+        "content": "{'word': 'astronaut', 'word_score': 42.0, 'phonemes': [{'phoneme': 'æ', 'score': 51.0}, {'phoneme': 's', 'score': 48.0}, {'phoneme': 't', 'score': 64.0}, {'phoneme': 'r', 'score': 58.0}, {'phoneme': 'ə', 'score': 49.0}, {'phoneme': 'n', 'score': 13.0}, {'phoneme': 'ɔ', 'score': 23.0}, {'phoneme': 't', 'score': 30.0}]}"
+    },
+    {
+        "role": "assistant",
+        "content": "Thanks — this is helpful. I looked at your scores for astronaut (overall 42). Here’s a short, focused plan to keep the sounds you already do well and fix the ones dragging your score down.\n\nQuick summary\n- Best: t (third phoneme) — 64 — good tongue placement and stop release there.\n- Mid: æ 51, r 58, s 48, ə 49 — OK but can be clearer.\n- Needs work: n 13, ɔ 23, final t 30 — these three are the priority.\n\nHow the word breaks down (try saying each chunk slowly): /æ/ - /s/ - /t/ - /r/ - /ə/ - /n/ - /ɔ/ - /t/\n\nTargeted tips and short drills\n\n1) Fix the weak nasal: n (score 13)\n- What to feel: tip of tongue pressed gently against the alveolar ridge (just behind top front teeth). Air flows through the nose, voice is ON.\n- Drill:\n  - Hold the tongue on the ridge and hum “nnnn” for 5–10 seconds.\n  - Move to syllables: “nuh” → “nee” → “nah” (keep the tongue tip on the ridge).\n  - Repeat the sequence: “ən-ən-ən” → “astrə-n…” so you feel the tongue placement inside the word.\n- Minimal practice words: no, name, run, man, noon. Then say: “as-tro-naut” focusing on feeling the n between schwa and ɔ.\n\n2) Open-mid back rounded vowel: ɔ (score 23)\n- What to do: lower jaw moderately, pull the tongue back and a little down, round your lips. Sound like the vowel in “law” or “saw” (in accents that distinguish caught vs cot).\n- Drill:\n  - Say “aw-aw-aw” with clear lip rounding.\n  - Practice: law → saw → thought → astronaut (focus just on the “-awt” part).\n  - Record yourself saying “aw” vs a front vowel like “ah” to hear the difference.\n- Words to repeat: law, saw, draw, thought, astronaut (isolate “-nawt”).\n\n3) Final t (score 30)\n- Problem: final t may be dropped or unreleased.\n- What to do: tongue tip touches the alveolar ridge and make a quick burst of air (release) or practice a light aspirated release depending on accent.\n- Drill:\n  - Say “hat, hat, hat” with a clear crisp release each time.\n  - Say “astronaut-uh” (add a quick extra vowel) to feel the t release, then say “astronaut” with the same tongue movement but without the extra vowel.\n  - Practice final t in short phrases: “my hat,” “an astronaut,” “last stop.”\n- Tip: exaggerate the release slowly, then speed up.\n\n4) Improve mid-score sounds\n- s (48): Put the tongue close to the alveolar ridge, teeth slightly open, blow steady air to make a clear hissing /s/. Drill: “see, sit, sun”. Hold the s for 1–2 seconds before continuing to the vowel.\n- ə (49): Keep it short, relaxed and central. Practice: “about, sofa, comma.” In astronaut the schwa is quick—don’t overemphasize it.\n- æ (51): Drop the jaw more, tongue forward, lips neutral; practice “cat, bag, at.” Hold the vowel slightly longer then move to s: “æ-s-…”\n- r (58): For an American r, bunch or curl the tongue without touching the roof. Slight lip rounding helps. Drill: “red, right, run.” Then practice “tr” cluster: “try, tree, tr-æ-”.\n\nPutting it together\n- Slow practice: Say each phoneme slowly: æ … s … t … r … ə … n … ɔ … t. Repeat 10 times.\n- Build: combine in chunks: “æs-trə” → “nɔt” → “æs-trə-nɔt”.\n- Full-speed: After many slow repetitions, say the whole word at normal speed 10 times.\n- Use recording: Record one attempt, listen back for n, ɔ and final t. Compare over days.\n\nShort daily routine (10 minutes)\n1. Warm-up (1–2 min): hum and do “nnnn” + “s-s-s”.\n2. Vowel work (2 min): practice æ and ɔ with contrast.\n3. Consonant drills (3 min): n + final t drills + s and r alignment.\n4. Word practice (2–3 min): chunk → whole word → short sentence (“The astronaut landed safely”).\n5. Record one line and listen (1 min).\n\nSmall goals\n- After 1 week: noticeable clarity on n and final t in the word.\n- After 2–3 weeks: smoother natural pronunciation and higher overall score.\n\nWant a custom short audio drill? I can give you a 3–4 line drill to practice and repeat aloud (text you can use to record). Which accent are you aiming for — General American or British RP?"
+    },
+    {
+        "role": "user",
+        "content": "{'word': 'and', 'word_score': 82.0, 'phonemes': [{'phoneme': 'ə', 'score': 80.0}, {'phoneme': 'n', 'score': 80.0}, {'phoneme': 'd', 'score': 78.0}]}"
+    },
+    {
+        "role": "assistant",
+        "content": "Nice work — 82 is a strong score. Quick take:\n- Strengths: schwa (ə) 80, n 80, d 78 — your vowel quality and consonant voicing/placement for this word are reliable.\n- Tiny improvements possible: make the schwa slightly shorter in fast speech, and ensure the final /d/ has a clear voiced closure/release when you want it (it’s naturally reduced in casual speech).\n\nPractical, focused tips (1–2 minutes each)\n\n1) Schwa (ə) — natural reduction\n- In isolation your schwa is good. In connected speech shorten it: say about “ə-bout” vs careful “ah-bout.” Drill: repeat “ə” quickly 10×, then “ən” 10×, then “ənd” 10×.\n\n2) Nasal /n/ — you’ve already got this\n- You scored very well here. Note the difference between /n/ at the start (onset) and /n/ in the middle or coda of a word. Practice both: “noon” (onset + coda) → “and” (onset + coda in phrases like “rock and roll”). Hold the tongue on the alveolar ridge and hum “nnn” then add the vowel.\n\n3) Final /d/ — voiced closure and linking\n- If you want the precise final /d/, close the tongue tip on the alveolar ridge, keep the voice on, then release. Drill: “bad — bad — bad” with a clear voiced stop each time.\n- If you’re practicing connected speech, practice linking vs reduction:\n  - Full: “bread and butter” (clear /d/ + /ə/ + /b/)\n  - Reduced: “bread ’n butter” (weak or omitted vowel, /n/ links)\n  - Flapping note (General American): between vowels /d/ can sound like a quick flap (but that’s optional depending on accent).\n\nShort 5‑minute routine (daily)\n1. Warm-up hum + “nnn” (30s)\n2. Schwa reduction: “ə — ən — ənd” cycles (1 min)\n3. Final d closure: “bad, bed, bid” minimal pairs (1 min)\n4. Linking practice: say phrases—“rock and roll,” “bread and butter,” “salt and pepper” — alternate full and reduced forms (2 min)\n\nWant short practice lines to repeat aloud or a 3–4 line drill tailored to American or British pronunciation? Which accent are you aiming for?"
+    }
+]
+"""
+
+# Count tokens
+num_tokens = len(encoding.encode(text))
+print(f"Tokens: {num_tokens}")

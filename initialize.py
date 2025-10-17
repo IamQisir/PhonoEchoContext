@@ -1,6 +1,7 @@
 import streamlit as st
 from openai import AzureOpenAI
 import azure.cognitiveservices.speech as speechsdk
+from data_loader import load_system_prompt
 
 
 def reset_page_padding():
@@ -60,6 +61,10 @@ def initialize_session_state(session_state, user:int, lesson: int):
         session_state.openai_client = init_openai_client()
     if "pronunciation_config" not in session_state:
         session_state.pronunciation_config = initialize_azure()
+    if "ai_messages" not in session_state:
+        session_state.ai_messages = [
+            {"role": "system", "content": load_system_prompt()}
+        ]
     if "practice_times" not in session_state:
         session_state.practice_times = 0
     if "feedback" not in session_state:
