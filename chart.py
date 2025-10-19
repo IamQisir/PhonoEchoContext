@@ -18,6 +18,7 @@ from matplotlib.projections.polar import PolarAxes
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
 from streamlit_advanced_audio import audix, CustomizedRegion, RegionColorOptions
+from audio_process import extract_timestamps_dict
 
 plt.rcParams["font.family"] = "MS Gothic"
 
@@ -50,24 +51,65 @@ def get_color(score):
         return "#ff0000"  # red
 
 @st.fragment
-def create_waveform_plot():
+def create_waveform_plot(user, lesson, practice_times, lowest_word_phonemes_dict, pronunciation_result):
     """
     Creates customized regions for waveform visualization using streamlit_advanced_audio.
     Highlights word intervals with colors based on pronunciation accuracy scores.
     
     Args:
-        audio_file (str): Path to the audio file
+        user (int): User ID
+        lesson (int): Lesson number
+        practice_times (int): Number of practice attempts
+        lowest_word_phonemes_dict (dict): Dictionary with lowest-scoring word info
         pronunciation_result (dict): Dictionary containing pronunciation assessment data
     
     Returns:
-        list: List of CustomizedRegion objects for use with audix component
+        None: Renders audix components directly
     """
+    # Load target pronunciation result (reference audio)
+    target_json_path = f"assets/{user}/resources/{lesson}.json"
+    try:
+        with open(target_json_path, "r", encoding="utf-8") as f:
+            target_result = json.load(f)
+        target_timestamps = extract_timestamps_dict(target_result)
+    except FileNotFoundError:
+        st.error(f"Target pronunciation file not found: {target_json_path}")
+        target_timestamps = {}
+    except Exception as e:
+        st.error(f"Error loading target timestamps: {e}")
+        target_timestamps = {}
+    
+    # Extract user timestamps from pronunciation_result
+    user_timestamps = extract_timestamps_dict(pronunciation_result)
 
-    audix("asset/1/history/9.wav", key="target")
-    audix(
-        "asset/1/history/9.wav",
-        key="user",
-    )
+    # Get timestamps for the lowest-scoring word
+    lowest_word = lowest_word_phonemes_dict["word"].lower()
+    target_start_end = target_timestamps.get(lowest_word, None)
+    user_start_end = user_timestamps.get(lowest_word, None)
+
+    # Display target audio with timestamp if available
+    if target_start_end:
+        audix(
+            f"assets/{user}/resources/{lesson}.wav", 
+            key="target", 
+            start_time=target_start_end["start_time"], 
+            end_time=target_start_end["end_time"]
+        )
+    else:
+        st.warning(f"Word '{lowest_word}' not found in target audio timestamps")
+        audix(f"assets/{user}/resources/{lesson}.wav", key="target")
+    
+    # Display user audio with timestamp if available
+    if user_start_end:
+        audix(
+            f"assets/{user}/history/{lesson}-{practice_times}.wav",
+            key="user",
+            start_time=user_start_end["start_time"],
+            end_time=user_start_end["end_time"]
+        )
+    else:
+        st.warning(f"Word '{lowest_word}' not found in user audio timestamps")
+        audix(f"assets/{user}/history/{lesson}-{practice_times}.wav", key="user")
 
 def create_syllable_table(pronunciation_result):
     """
@@ -96,7 +138,7 @@ def create_syllable_table(pronunciation_result):
             max-width: 100%;
             max-height: 300px;
             overflow-y: auto;
-            background-color: #000;
+            background-color: #0E1117;
             border-radius: 8px;
             padding: 10px;
         }}
@@ -104,7 +146,7 @@ def create_syllable_table(pronunciation_result):
             border-collapse: collapse; 
             min-width: 100%;
             font-size: 14px;
-            background-color: #000;
+            background-color: #0E1117;
             color: white;
             table-layout: auto;
         }}
@@ -330,38 +372,16 @@ def pronunciation_assessment(audio_file, reference_text):
         raise
 
 
-def create_doughnut_chart(data: pd.DataFrame, title: str):
-    """Create a doughnut chart using Altair"""
-    # Convert data to DataFrame
-    df = pd.DataFrame(list(data.items()), columns=["Error", "Count"])
-
-    return (
-        alt.Chart(df)
-        .mark_arc(innerRadius=50)
-        .encode(
-            theta=alt.Theta(field="Count", type="quantitative"),
-            color=alt.Color(
-                field="Error",
-                type="nominal",
-                scale=alt.Scale(
-                    range=[
-                        "#FF4B4B",
-                        "#FFC000",
-                        "#00B050",
-                        "#2F75B5",
-                        "#7030A0",
-                        "#000000",
-                    ]
-                ),
-            ),
-            tooltip=["Error", "Count"],
-        )
-        .properties(title=title, width=300, height=300)
-    )
-
-
-def plot_overall_score(data: pd.DataFrame):
+def plot_overall_score(scores_history: dict):
     """Plot overall pronunciation score"""
+    # Convert dict to DataFrame
+    if not scores_history or "PronScore" not in scores_history or not scores_history["PronScore"]:
+        # Return empty chart with message if no data
+        return alt.Chart(pd.DataFrame()).mark_text(text="まだ学習記録がありません", size=20)
+    
+    data = pd.DataFrame(scores_history)
+    data["Attempt"] = range(1, len(data) + 1)
+    
     # Calculate y-axis range
     y_min_pron = max(0, data["PronScore"].min() - 5)
     y_max_pron = min(100, data["PronScore"].max() + 5)
@@ -392,6 +412,8 @@ def plot_overall_score(data: pd.DataFrame):
         .properties(title="総合点スコア", width="container", height=300)
         .interactive()
     )
+    
+    return chart
 
 
 def test_radar_chart():
@@ -405,7 +427,6 @@ def test_syllable_table():
         result = json.load(f)
     html_table = create_syllable_table(result)
     st.html(html_table)
-
 
 
 def radar_factory(num_vars, frame="circle"):
@@ -629,3 +650,208 @@ def create_radar_chart(pronunciation_result):
     ax.spines['polar'].set_linewidth(1.5)
 
     return fig
+
+def update_scores_history(session_state, scores_dict):
+    """Update scores history in session state."""
+    for key, value in scores_dict.items():
+        if key in session_state.scores_history:
+            session_state.scores_history[key].append(value)
+        else:
+            session_state.scores_history[key] = [value]
+
+def update_errors_history(session_state, errors_dict):
+    """Update errors history in session state.
+    
+    Args:
+        session_state: Streamlit session state object
+        errors_dict: Dictionary with error types as keys and lists of words as values
+                    Format: {"Omission": ["word1", "word2"], ...}
+    """
+    for key, value in errors_dict.items():
+        # Convert list to count
+        count = len(value) if isinstance(value, list) else value
+        
+        if key in session_state.errors_history:
+            session_state.errors_history[key] += count
+        else:
+            session_state.errors_history[key] = count
+
+
+def create_doughnut_chart(data: dict, title: str):
+    """
+    Create a doughnut chart using Altair.
+    
+    Args:
+        data: Dictionary with error types as keys and counts as values
+              Format 1: {"Omission": 2, "Mispronunciation": 1, ...}
+              Format 2: {"Omission": ["word1", "word2"], ...} (will be converted to counts)
+        title: Chart title
+    
+    Returns:
+        Altair chart object
+    """
+    # Convert list values to counts if necessary
+    processed_data = {}
+    for key, value in data.items():
+        if isinstance(value, list):
+            processed_data[key] = len(value)
+        else:
+            processed_data[key] = value
+    
+    # Filter out zero counts
+    processed_data = {k: v for k, v in processed_data.items() if v > 0}
+    
+    # Check if data is empty
+    if not processed_data:
+        return alt.Chart(pd.DataFrame()).mark_text(
+            text="エラーなし", 
+            size=20,
+            color="green"
+        ).properties(title=title, width=300, height=300)
+    
+    # Convert data to DataFrame
+    df = pd.DataFrame(list(processed_data.items()), columns=["Error", "Count"])
+
+    chart = (
+        alt.Chart(df)
+        .mark_arc(innerRadius=50)
+        .encode(
+            theta=alt.Theta(field="Count", type="quantitative"),
+            color=alt.Color(
+                field="Error",
+                type="nominal",
+                scale=alt.Scale(
+                    range=[
+                        "#FF4B4B",
+                        "#FFC000",
+                        "#00B050",
+                        "#2F75B5",
+                        "#7030A0",
+                        "#000000",
+                    ]
+                ),
+            ),
+            tooltip=["Error", "Count"],
+        )
+        .properties(title=title, width=300, height=300)
+    )
+    
+    return chart
+
+
+def plot_detail_scores(scores_history: dict):
+    """Plot detailed scores components"""
+    # Convert dict to DataFrame
+    metrics = ["AccuracyScore", "FluencyScore", "CompletenessScore", "ProsodyScore"]
+    
+    # Check if data exists
+    if not scores_history or not any(metric in scores_history and scores_history[metric] for metric in metrics):
+        # Return empty chart with message if no data
+        return alt.Chart(pd.DataFrame()).mark_text(text="まだ学習記録がありません", size=20)
+    
+    data = pd.DataFrame(scores_history)
+    data["Attempt"] = range(1, len(data) + 1)
+    
+    # Prepare data
+    detail_data = data.melt(
+        id_vars=["Attempt"], value_vars=metrics, var_name="Metric", value_name="Score"
+    )
+
+    # Calculate y-axis range
+    y_min_detail = max(0, min(data[metrics].min()) - 5)
+    y_max_detail = min(100, max(data[metrics].max()) + 5)
+
+    chart = (
+        alt.Chart(detail_data)
+        .mark_line(point=True)
+        .encode(
+            x=alt.X(
+                "Attempt:Q",
+                axis=alt.Axis(
+                    tickMinStep=1,
+                    title="練習回数",
+                    values=list(range(1, 11)),
+                    tickCount=10,
+                    format="d",
+                    grid=True,
+                ),
+                scale=alt.Scale(domain=[1, 10]),
+            ),
+            y=alt.Y(
+                "Score:Q",
+                title="スコア",
+                scale=alt.Scale(domain=[y_min_detail, y_max_detail]),
+            ),
+            color=alt.Color(
+                "Metric:N",
+                scale=alt.Scale(range=["#00C957", "#4169E1", "#FFD700", "#FF69B4"]),
+                legend=alt.Legend(title="評価指標", orient="right"),
+            ),
+            tooltip=["Attempt", "Score", "Metric"],
+        )
+        .properties(title="詳細スコア", width="container", height=300)
+        .interactive()
+    )
+
+    return chart
+
+
+def plot_score_history():
+    # Check if learning_state exists and has scores_history
+    if (
+        "learning_state" not in st.session_state
+        or "scores_history" not in st.session_state.learning_state
+    ):
+        st.warning("まだ学習記録がありません")
+        return
+
+    lesson_index = st.session_state.lesson_index
+
+    if lesson_index not in st.session_state.learning_state["scores_history"]:
+        st.warning(f"レッスン {lesson_index + 1} の記録がありません")
+        return
+
+    # Check if data exists
+    scores = st.session_state.learning_state["scores_history"][lesson_index]
+    if not any(scores.values()):  # Check if all score lists are empty
+        st.warning("まだ学習記録がありません")
+        return
+
+    # Ensure all arrays have the same length before creating DataFrame
+    max_length = max(len(v) for v in scores.values() if v)
+    if max_length == 0:
+        st.warning("まだ学習記録がありません")
+        return
+
+    # Pad shorter arrays with None or use only the minimum length
+    min_length = min(len(v) for v in scores.values() if v)
+
+    # Create a clean scores dict with consistent lengths
+    clean_scores = {}
+    for key, value_list in scores.items():
+        if value_list:  # Only include non-empty lists
+            clean_scores[key] = value_list[:min_length]  # Truncate to minimum length
+
+    if not clean_scores or min_length == 0:
+        st.warning("まだ学習記録がありません")
+        return
+
+    # Create DataFrame only if we have data
+    data = pd.DataFrame(clean_scores)
+    if len(data) == 0:
+        st.warning("まだ学習記録がありません")
+        return
+
+    data["Attempt"] = range(1, len(data) + 1)
+
+    # Create two columns for charts
+    col1, col2 = st.columns([2, 3])
+
+    # Plot charts in columns
+    with col1:
+        overall_chart = plot_overall_score(data)
+        st.altair_chart(overall_chart, use_container_width=True)
+
+    with col2:
+        detail_chart = plot_detail_scores(data)
+        st.altair_chart(detail_chart, use_container_width=True)

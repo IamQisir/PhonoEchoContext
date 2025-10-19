@@ -106,7 +106,7 @@ def parse_pronunciation_assessment(pronunciation_result):
             error_type = word_assessment.get("ErrorType", "None")
             accuracy_score = word_assessment.get("AccuracyScore", 100.0)
             
-            # Collect word-level errors
+            # Collect word-level errors (only basic pronunciation errors)
             if error_type == "Omission":
                 errors_dict["Omission"].append(word_text)
             elif error_type == "Mispronunciation":
@@ -114,17 +114,23 @@ def parse_pronunciation_assessment(pronunciation_result):
             elif error_type == "Insertion":
                 errors_dict["Insertion"].append(word_text)
             
-            # Check for prosody errors in Feedback
-            feedback = word_assessment.get("Feedback", {})
-            prosody = feedback.get("Prosody", {})
-            break_info = prosody.get("Break", {})
-            break_error_types = break_info.get("ErrorTypes", [])
+            # NOTE: Prosody errors (UnexpectedBreak, MissingBreak) are NOT counted
+            # Uncomment below if you want to include prosody errors:
             
-            # Collect prosody-related errors
-            if "UnexpectedBreak" in break_error_types:
-                errors_dict["UnexpectedBreak"].append(word_text)
-            if "MissingBreak" in break_error_types:
-                errors_dict["MissingBreak"].append(word_text)
+            # # Check for prosody errors in Feedback
+            # feedback = word_assessment.get("Feedback", {})
+            # prosody = feedback.get("Prosody", {})
+            # break_info = prosody.get("Break", {})
+            # 
+            # # Check for UnexpectedBreak - use confidence threshold of 0.95
+            # unexpected_break = break_info.get("UnexpectedBreak", {})
+            # if unexpected_break and unexpected_break.get("Confidence", 0) > 0.95:
+            #     errors_dict["UnexpectedBreak"].append(word_text)
+            # 
+            # # Check for MissingBreak - use confidence threshold of 0.95
+            # missing_break = break_info.get("MissingBreak", {})
+            # if missing_break and missing_break.get("Confidence", 0) > 0.95:
+            #     errors_dict["MissingBreak"].append(word_text)
             
             # Track lowest scoring word (only for non-omitted words)
             if error_type != "Omission" and accuracy_score < lowest_score:
@@ -173,10 +179,25 @@ def create_openai_client():
     return client
 
 def get_ai_feedback(client, messages):
+    """Get AI feedback from OpenAI API.
+    
+    Args:
+        client: OpenAI client
+        messages: List of message dictionaries
+        
+    Returns:
+        str: AI response content, or None if error occurs
+    """
     try:
+        # Clean messages to remove any None content values
+        cleaned_messages = [
+            msg for msg in messages 
+            if msg.get("content") is not None
+        ]
+        
         response = client.chat.completions.create(
             model="gpt-5-mini",
-            messages=messages,
+            messages=cleaned_messages,
             stream=False,
         )
         return response.choices[0].message.content

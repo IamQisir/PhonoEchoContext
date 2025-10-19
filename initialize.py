@@ -66,6 +66,16 @@ def initialize_session_state(session_state, user:int, lesson: int):
         ]
     if "practice_times" not in session_state:
         session_state.practice_times = 0
+    if "scores_history" not in session_state:
+        session_state.scores_history = {
+            "PronScore": [],
+            "AccuracyScore": [],
+            "FluencyScore": [],
+            "CompletenessScore": [],
+            "ProsodyScore": []
+        }
+    if "errors_history" not in session_state:
+        session_state.errors_history = {}
     if "feedback" not in session_state:
         session_state.feedback = {
             "result_json": None,
