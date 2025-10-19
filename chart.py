@@ -17,6 +17,7 @@ from matplotlib.projections import register_projection
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
+from streamlit_advanced_audio import audix, CustomizedRegion, RegionColorOptions
 
 plt.rcParams["font.family"] = "MS Gothic"
 
@@ -48,7 +49,8 @@ def get_color(score):
         # needing significant improvement (0-39)
         return "#ff0000"  # red
 
-def create_waveform_plot(audio_file, pronunciation_result):
+@st.fragment
+def create_waveform_plot():
     """
     Creates customized regions for waveform visualization using streamlit_advanced_audio.
     Highlights word intervals with colors based on pronunciation accuracy scores.
@@ -60,50 +62,12 @@ def create_waveform_plot(audio_file, pronunciation_result):
     Returns:
         list: List of CustomizedRegion objects for use with audix component
     """
-    from streamlit_advanced_audio import CustomizedRegion
 
-    custom_regions = []
-
-    # Extract words from pronunciation result
-    words = pronunciation_result["NBest"][0]["Words"]
-
-    for word in words:
-        # Skip if word doesn't have pronunciation assessment
-        if "PronunciationAssessment" not in word:
-            continue
-
-        # Get word timing information (Azure returns in 100-nanosecond units)
-        start_time = word["Offset"] / 10000000  # Convert to seconds
-        word_duration = word["Duration"] / 10000000  # Convert to seconds
-        end_time = start_time + word_duration
-
-        # Determine color based on error type and accuracy score
-        error_type = word["PronunciationAssessment"].get("ErrorType", "None")
-
-        if error_type == "Omission":
-            # Omitted words get orange color
-            color = get_color(None)
-        else:
-            # Get accuracy score and corresponding color
-            score = word["PronunciationAssessment"].get("AccuracyScore", 0)
-            color = get_color(score)
-
-        # Convert hex color to rgba format with transparency for better visualization
-        # Extract RGB values from hex
-        hex_color = color.lstrip('#')
-        r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-        rgba_color = f"rgba({r}, {g}, {b}, 0.5)"
-
-        # Create customized region for this word
-        region = CustomizedRegion(
-            start=start_time,
-            end=end_time,
-            color=rgba_color
-        )
-        custom_regions.append(region)
-
-    return custom_regions
-
+    audix("asset/1/history/9.wav", key="target")
+    audix(
+        "asset/1/history/9.wav",
+        key="user",
+    )
 
 def create_syllable_table(pronunciation_result):
     """
@@ -139,7 +103,7 @@ def create_syllable_table(pronunciation_result):
         .eval-table {{ 
             border-collapse: collapse; 
             min-width: 100%;
-            font-size: 12px;
+            font-size: 14px;
             background-color: #000;
             color: white;
             table-layout: auto;
@@ -150,7 +114,7 @@ def create_syllable_table(pronunciation_result):
             padding: 12px;
             text-align: center;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 12px;
             white-space: nowrap;
         }}
         .eval-table td {{ 
@@ -160,7 +124,7 @@ def create_syllable_table(pronunciation_result):
             min-width: 80px;
         }}
         .word-cell {{ 
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
             position: relative;
             padding: 15px 10px;
@@ -170,24 +134,36 @@ def create_syllable_table(pronunciation_result):
             position: absolute;
             top: 4px;
             right: 6px;
-            font-size: 10px;
+            font-size: 12px;
             font-weight: normal;
             opacity: 0.9;
         }}
         .phoneme-row {{
-            font-size: 12px;
-            padding: 8px;
-            background-color: #1a1a1a;
+            font-size: 16px;
+            padding: 0;
+        }}
+        .phoneme-container {{
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            height: 100%;
+            min-height: 25px;
         }}
         .phoneme-item {{
-            display: inline-block;
-            margin: 2px 3px;
-            padding: 4px 6px;
-            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
             font-weight: 500;
+            border-right: 2px solid #555;
+            flex: 1;
+            min-width: 40px;
+        }}
+        .phoneme-item:last-child {{
+            border-right: none;
         }}
         .score-row {{
-            font-size: 12px;
+            font-size: 14px;
             padding: 8px;
             background-color: #0a0a0a;
         }}
@@ -202,7 +178,7 @@ def create_syllable_table(pronunciation_result):
         }}
         .score-cell {{
             font-weight: bold;
-            font-size: 12px;
+            font-size: 14px;
         }}
         .header-cell {{
             background-color: #1a4d6d !important;
@@ -211,24 +187,27 @@ def create_syllable_table(pronunciation_result):
     <div class="table-container">
     <table class="eval-table">
         <tr>
+            <th class="header-cell">Pronunciation Score</th>
             <th class="header-cell">Accuracy Score</th>
             <th class="header-cell">Fluency Score</th>
             <th class="header-cell">Completeness Score</th>
-            <th class="header-cell">Pronunciation Score</th>
+            <th class="header-cell">Prosody Score</th>
             <th class="header-cell">Words Omitted</th>
         </tr>
         <tr>
+            <td class="score-cell">{pron}</td>
             <td class="score-cell">{acc}</td>
             <td class="score-cell">{flu}</td>
             <td class="score-cell">{comp}</td>
-            <td class="score-cell">{pron}</td>
+            <td class="score-cell">{pros}</td>
             <td style="font-size: 12px;">{omit}</td>
         </tr>
     """.format(
+        pron=int(overall.get("PronScore", 0)),
         acc=int(overall.get("AccuracyScore", 0)),
         flu=int(overall.get("FluencyScore", 0)),
         comp=int(overall.get("CompletenessScore", 0)),
-        pron=int(overall.get("PronScore", 0)),
+        pros=int(overall.get("ProsodyScore", 0)),
         omit=omitted_text
     )
     
@@ -262,39 +241,20 @@ def create_syllable_table(pronunciation_result):
         error_type = word_assessment.get("ErrorType", "None")
         
         if error_type == "Omission":
-            output += '<td class="phoneme-row">-</td>'
+            output += '<td class="phoneme-row"><div class="phoneme-container">-</div></td>'
         elif "Phonemes" in word:
-            phoneme_html = ""
+            phoneme_html = '<div class="phoneme-container">'
             for phoneme in word["Phonemes"]:
                 phoneme_text = phoneme["Phoneme"]
                 phoneme_score = phoneme.get("PronunciationAssessment", {}).get("AccuracyScore", 0)
                 phoneme_color = get_color(phoneme_score)
                 # Use background color instead of text color for better visibility
                 text_color = 'white' if phoneme_score < 80 else 'black'
-                phoneme_html += f'<span class="phoneme-item" style="background-color: {phoneme_color}; color: {text_color};">{phoneme_text}</span>'
+                phoneme_html += f'<div class="phoneme-item" style="background-color: {phoneme_color}; color: {text_color};">{phoneme_text}</div>'
+            phoneme_html += '</div>'
             output += f'<td class="phoneme-row">{phoneme_html}</td>'
         else:
-            output += f'<td class="phoneme-row">{word["Word"]}</td>'
-    output += "</tr>"
-    
-    # Add score row for phonemes (numeric scores)
-    output += "<tr>"
-    for word in words:
-        word_assessment = word.get("PronunciationAssessment", {})
-        error_type = word_assessment.get("ErrorType", "None")
-        
-        if error_type == "Omission":
-            output += '<td class="score-row">-</td>'
-        elif "Phonemes" in word:
-            score_html = ""
-            for phoneme in word["Phonemes"]:
-                phoneme_score = phoneme.get("PronunciationAssessment", {}).get("AccuracyScore", 0)
-                phoneme_color = get_color(phoneme_score)
-                text_color = 'white' if phoneme_score < 80 else 'black'
-                score_html += f'<span class="score-badge" style="background-color: {phoneme_color}; color: {text_color};">{int(phoneme_score)}</span>'
-            output += f'<td class="score-row">{score_html}</td>'
-        else:
-            output += '<td class="score-row">-</td>'
+            output += f'<td class="phoneme-row"><div class="phoneme-container">{word["Word"]}</div></td>'
     output += "</tr>"
     
     output += "</table></div>"

@@ -50,7 +50,6 @@ def initialize_azure():
     pronunciation_config.phoneme_alphabet = "IPA"
     return pronunciation_config
 
-
 def initialize_session_state(session_state, user:int, lesson: int):
     """Initialize session state variables."""
     if "user" not in session_state:
