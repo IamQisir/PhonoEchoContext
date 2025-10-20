@@ -73,15 +73,18 @@ with tabs[0]:
                 st.session_state.ai_messages.append(
                     {"role": "user", "content": user_prompt}
                 )
-                ai_response = get_ai_feedback(
-                    st.session_state.openai_client,
-                    st.session_state.ai_messages,
+
+                ai_response = st.write_stream(
+                    get_ai_feedback(
+                        st.session_state.openai_client,
+                        st.session_state.ai_messages,
+                    )
                 )
-                st.write_stream(ai_response)
                 # write ai feedback in streaming mode
                 st.session_state.ai_messages.append(
                     {"role": "assistant", "content": ai_response}
                 )
+                print("AI Messages:", st.session_state.ai_messages)
             else:
                 st.html(    
                     "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"

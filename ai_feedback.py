@@ -189,15 +189,9 @@ def get_ai_feedback(client, messages):
         str: AI response content, or None if error occurs
     """
     try:
-        # Clean messages to remove any None content values
-        cleaned_messages = [
-            msg for msg in messages 
-            if msg.get("content") is not None
-        ]
-        
         response = client.chat.completions.create(
             model="gpt-5-mini",
-            messages=cleaned_messages,
+            messages=messages,
             stream=True,
         )
         # if not streaming, use below
@@ -259,7 +253,23 @@ if __name__ == "__main__":
     messages = [
         {
             "role": "system",
-            "content": "You are a helpful English pronunciation assistant. Personalize your feedback based on the user's pronunciation assessment data. Please keep the feedback concise and respond in Japanese.",
+            "content": "You are a chatbot.Please answer my questions in English.",
         }
     ]
-    ai_chatbot_test(client, messages)
+    if user_prompt:= st.chat_input("Enter your prompt: "):
+        with st.chat_message("user"):
+            st.markdown(user_prompt)
+        messages.append({
+            "role": "user",
+            "content": user_prompt,
+        })
+        with st.chat_message("assistant"):
+            full_text = st.write_stream(get_ai_feedback(client, messages))
+        messages.append(
+            {
+                "role": "assistant",
+                "content": full_text,
+            }
+        )
+
+
