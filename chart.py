@@ -695,10 +695,13 @@ def create_doughnut_chart(data: dict, title: str):
     for key, value in data.items():
         if isinstance(value, list):
             processed_data[key] = len(value)
-        else:
+        elif isinstance(value, (int, float)):
             processed_data[key] = value
+        else:
+            # Skip non-numeric, non-list values
+            continue
     
-    # Filter out zero counts
+    # Filter out zero counts (now safe since all values are numeric)
     processed_data = {k: v for k, v in processed_data.items() if v > 0}
     
     # Check if data is empty

@@ -198,9 +198,11 @@ def get_ai_feedback(client, messages):
         response = client.chat.completions.create(
             model="gpt-5-mini",
             messages=cleaned_messages,
-            stream=False,
+            stream=True,
         )
-        return response.choices[0].message.content
+        # if not streaming, use below
+        # return response.choices[0].message.content
+        return response
     except Exception as e:
         st.error(f"Error getting AI feedback: {e}")
         return None
@@ -260,4 +262,4 @@ if __name__ == "__main__":
             "content": "You are a helpful English pronunciation assistant. Personalize your feedback based on the user's pronunciation assessment data. Please keep the feedback concise and respond in Japanese.",
         }
     ]
-    ai_feedback_test(client, messages)
+    ai_chatbot_test(client, messages)

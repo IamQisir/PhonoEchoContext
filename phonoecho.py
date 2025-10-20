@@ -77,17 +77,11 @@ with tabs[0]:
                     st.session_state.openai_client,
                     st.session_state.ai_messages,
                 )
-                # Only add to messages if response is valid
-                if ai_response is not None:
-                    st.session_state.ai_messages.append(
-                        {"role": "assistant", "content": ai_response}
-                    )
-                    st.write(ai_response)
-                else:
-                    # Remove the user message since we didn't get a valid response
-                    st.session_state.ai_messages.pop()
-                    st.error("AI フィードバックの取得に失敗しました。もう一度お試しください。")
-
+                st.write_stream(ai_response)
+                # write ai feedback in streaming mode
+                st.session_state.ai_messages.append(
+                    {"role": "assistant", "content": ai_response}
+                )
             else:
                 st.html(    
                     "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"
@@ -112,7 +106,6 @@ with tabs[1]:
             st.html("<h1 style='text-align: center;'>音節的な発音の統計表</h1>")
 
 with tabs[2]:
-    st.header("まとめ")
     inner_cols3 = st.columns(2)
 
     with inner_cols3[0]:
