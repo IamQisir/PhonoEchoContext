@@ -86,3 +86,8 @@ def initialize_session_state(session_state, user:int, lesson: int):
             "syllable_table": None,
             "pron_score": None,
         }
+
+def refresh_page_to_remove_ghost(session_state):
+    if "refreshed" not in session_state:
+        session_state.refreshed = True
+        st.rerun()

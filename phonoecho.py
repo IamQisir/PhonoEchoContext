@@ -1,6 +1,6 @@
-import streamlit as st
+﻿import streamlit as st
 import json
-from initialize import reset_page_padding, initialize_session_state, init_openai_client
+from initialize import reset_page_padding, initialize_session_state, refresh_page_to_remove_ghost
 from data_loader import load_video, load_text, update_user_prompt
 from ai_feedback import (
     get_ai_feedback,
@@ -147,3 +147,5 @@ with tabs[2]:
                 st.altair_chart(total_errors_chart, use_container_width=True)
             else:
                 st.html("<h2 style='text-align: center;'>総合エラー数</h2>")
+
+refresh_page_to_remove_ghost(st.session_state)

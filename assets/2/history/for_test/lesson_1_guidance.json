@@ -1,0 +1,191 @@
+{
+  "target_text": "a rocket roared into the sky leaving a trail of fire and smoke tim imagined himself as the astronaut waving goodbye",
+  "target_display": "A rocket roared into the sky, leaving a trail of fire and smoke. Tim imagined himself as the astronaut waving goodbye.",
+  "total_words": 21,
+  "total_phonemes": 81,
+  "challenging_phonemes": [
+    {
+      "phoneme": "n",
+      "score": 13.0,
+      "word": "astronaut",
+      "position": 5,
+      "expected_phoneme": null
+    },
+    {
+      "phoneme": "ɔ",
+      "score": 23.0,
+      "word": "astronaut",
+      "position": 6,
+      "expected_phoneme": null
+    },
+    {
+      "phoneme": "n",
+      "score": 26.0,
+      "word": "imagined",
+      "position": 5,
+      "expected_phoneme": null
+    },
+    {
+      "phoneme": "m",
+      "score": 27.0,
+      "word": "tim",
+      "position": 2,
+      "expected_phoneme": null
+    },
+    {
+      "phoneme": "t",
+      "score": 30.0,
+      "word": "astronaut",
+      "position": 7,
+      "expected_phoneme": null
+    }
+  ],
+  "challenging_words": [
+    {
+      "word": "astronaut",
+      "score": 42.0,
+      "error_type": "Mispronunciation",
+      "phoneme_errors": [
+        {
+          "phoneme": "æ",
+          "score": 51.0,
+          "word": "astronaut",
+          "position": 0,
+          "expected_phoneme": null
+        },
+        {
+          "phoneme": "s",
+          "score": 48.0,
+          "word": "astronaut",
+          "position": 1,
+          "expected_phoneme": null
+        },
+        {
+          "phoneme": "t",
+          "score": 64.0,
+          "word": "astronaut",
+          "position": 2,
+          "expected_phoneme": null
+        },
+        {
+          "phoneme": "r",
+          "score": 58.0,
+          "word": "astronaut",
+          "position": 3,
+          "expected_phoneme": null
+        },
+        {
+          "phoneme": "ə",
+          "score": 49.0,
+          "word": "astronaut",
+          "position": 4,
+          "expected_phoneme": null
+        },
+        {
+          "phoneme": "n",
+          "score": 13.0,
+          "word": "astronaut",
+          "position": 5,
+          "expected_phoneme": null
+        },
+        {
+          "phoneme": "ɔ",
+          "score": 23.0,
+          "word": "astronaut",
+          "position": 6,
+          "expected_phoneme": null
+        },
+        {
+          "phoneme": "t",
+          "score": 30.0,
+          "word": "astronaut",
+          "position": 7,
+          "expected_phoneme": null
+        }
+      ],
+      "offset_ms": 9560,
+      "duration_ms": 870
+    },
+    {
+      "word": "imagined",
+      "score": 51.0,
+      "error_type": "Mispronunciation",
+      "phoneme_errors": [
+        {
+          "phoneme": "ə",
+          "score": 65.0,
+          "word": "imagined",
+          "position": 4,
+          "expected_phoneme": null
+        },
+        {
+          "phoneme": "n",
+          "score": 26.0,
+          "word": "imagined",
+          "position": 5,
+          "expected_phoneme": null
+        },
+        {
+          "phoneme": "d",
+          "score": 37.0,
+          "word": "imagined",
+          "position": 6,
+          "expected_phoneme": null
+        }
+      ],
+      "offset_ms": 7610,
+      "duration_ms": 750
+    },
+    {
+      "word": "tim",
+      "score": 53.0,
+      "error_type": "Mispronunciation",
+      "phoneme_errors": [
+        {
+          "phoneme": "ɪ",
+          "score": 61.0,
+          "word": "tim",
+          "position": 1,
+          "expected_phoneme": null
+        },
+        {
+          "phoneme": "m",
+          "score": 27.0,
+          "word": "tim",
+          "position": 2,
+          "expected_phoneme": null
+        }
+      ],
+      "offset_ms": 7260,
+      "duration_ms": 320
+    }
+  ],
+  "prosody_patterns": [
+    {
+      "issue_type": "UnexpectedBreak",
+      "word": "tim",
+      "confidence": 1.9508022,
+      "break_length_ms": 570,
+      "description": "Unexpected pause before 'tim' (570ms)"
+    },
+    {
+      "issue_type": "UnexpectedBreak",
+      "word": "leaving",
+      "confidence": 1.368984,
+      "break_length_ms": 400,
+      "description": "Unexpected pause before 'leaving' (400ms)"
+    },
+    {
+      "issue_type": "MissingBreak",
+      "word": "rocket",
+      "confidence": 1.0,
+      "break_length_ms": 0,
+      "description": "Missing pause after 'rocket'"
+    }
+  ],
+  "reference_accuracy": 90.0,
+  "reference_fluency": 90.0,
+  "reference_prosody": 70.6,
+  "reference_completeness": 86.0,
+  "reference_overall": 81.4
+}
