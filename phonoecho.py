@@ -121,7 +121,6 @@ with tabs[0]:
 #                 st.session_state.ai_messages.append(
 #                     {"role": "assistant", "content": ai_response}
 #                 )
-#                 print("AI Messages:", st.session_state.ai_messages)
 #             else:
 #                 st.html(
 #                     "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"
@@ -136,44 +135,50 @@ with tabs[0]:
 #         else:
 #             st.html("<h1 style='text-align: center;'>音節的な発音の統計表</h1>")
 
-# with tabs[2]:
-#     inner_cols3 = st.columns(2)
+with tabs[2]:
+    inner_cols3 = st.columns(2)
 
-#     with inner_cols3[0]:
-#         with st.container(
-#             height=400, horizontal_alignment="center", vertical_alignment="center"
-#         ):
-#             if pronunciation_assessment_result is not None:
-#                 overall_score_chart = plot_overall_score(st.session_state.scores_history)
-#                 st.altair_chart(overall_score_chart, use_container_width=True)
-#             else:
-#                 st.html("<h2 style='text-align: center;'>全体スコアの推移</h2>")
-#         with st.container(
-#             height=400, horizontal_alignment="center", vertical_alignment="center"
-#         ):
-#             if pronunciation_assessment_result is not None:
-#                 detail_scores_chart = plot_detail_scores(st.session_state.scores_history)
-#                 st.altair_chart(detail_scores_chart, use_container_width=True)
-#             else:
-#                 st.html("<h2 style='text-align: center;'>詳細スコアの推移</h2>")
+    with inner_cols3[0]:
+        with st.container(
+            height=350, horizontal_alignment="center", vertical_alignment="center"
+        ):
+            if pronunciation_assessment_result is not None:
+                overall_score_chart = plot_overall_score(st.session_state.scores_history)
+                st.altair_chart(overall_score_chart, use_container_width=True)
+            else:
+                st.html("<h2 style='text-align: center;'>全体スコアの推移</h2>")
+        with st.container(
+            height=400, horizontal_alignment="center", vertical_alignment="center"
+        ):
+            # errors_history is always available from session_state
+            if pronunciation_assessment_result is not None:
+                if not errors_dict:
+                    total_errors_chart = create_doughnut_chart(
+                        st.session_state.errors_history, "総合"
+                    )
+                    st.altair_chart(total_errors_chart, use_container_width=True)
+                else:
+                    st.image("assets/Goodjob_stickman.gif")
+            else:
+                st.html("<h2 style='text-align: center;'>総合エラー数</h2>")
 
-#     with inner_cols3[1]:
-#         with st.container(
-#             height=400, horizontal_alignment="center", vertical_alignment="center"
-#         ):
-#             if pronunciation_assessment_result is not None:
-#                 current_errors_chart = create_doughnut_chart(errors_dict, "今回の練習")
-#                 st.altair_chart(current_errors_chart, use_container_width=True)
-#             else:
-#                 st.html("<h2 style='text-align: center;'>今回の練習</h2>")
-#         with st.container(
-#             height=400, horizontal_alignment="center", vertical_alignment="center"
-#         ):
-#             # errors_history is always available from session_state
-#             if pronunciation_assessment_result is not None:
-#                 total_errors_chart = create_doughnut_chart(st.session_state.errors_history, "総合")
-#                 st.altair_chart(total_errors_chart, use_container_width=True)
-#             else:
-#                 st.html("<h2 style='text-align: center;'>総合エラー数</h2>")
+    with inner_cols3[1]:
+        with st.container(
+            height=350, horizontal_alignment="center", vertical_alignment="center"
+        ):
+            if pronunciation_assessment_result is not None:
+                detail_scores_chart = plot_detail_scores(st.session_state.scores_history)
+                st.altair_chart(detail_scores_chart, use_container_width=True)
+            else:
+                st.html("<h2 style='text-align: center;'>詳細スコアの推移</h2>")
+
+        with st.container(
+            height=400, horizontal_alignment="center", vertical_alignment="center"
+        ):
+            # errors_history is always available from session_state
+            if pronunciation_assessment_result is not None:
+                st.write("AIによるまとめ")
+            else:
+                st.html("<h2 style='text-align: center;'>AIによるまとめ</h2>")
 
 refresh_page_to_remove_ghost(st.session_state)

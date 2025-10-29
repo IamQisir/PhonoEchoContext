@@ -1,4 +1,4 @@
-import io
+﻿import io
 import os
 import json
 import librosa
@@ -378,10 +378,10 @@ def plot_overall_score(scores_history: dict):
     if not scores_history or "PronScore" not in scores_history or not scores_history["PronScore"]:
         # Return empty chart with message if no data
         return alt.Chart(pd.DataFrame()).mark_text(text="まだ学習記録がありません", size=20)
-    
+
     data = pd.DataFrame(scores_history)
     data["Attempt"] = range(1, len(data) + 1)
-    
+
     # Calculate y-axis range
     y_min_pron = max(0, data["PronScore"].min() - 5)
     y_max_pron = min(100, data["PronScore"].max() + 5)
@@ -395,12 +395,12 @@ def plot_overall_score(scores_history: dict):
                 axis=alt.Axis(
                     tickMinStep=1,
                     title="練習回数",
-                    values=list(range(1, 11)),
-                    tickCount=10,
+                    values=list(range(1, 7)),
+                    tickCount=6,
                     format="d",
                     grid=True,
                 ),
-                scale=alt.Scale(domain=[1, 10]),
+                scale=alt.Scale(domain=[1, 6]),
             ),
             y=alt.Y(
                 "PronScore:Q",
@@ -412,21 +412,139 @@ def plot_overall_score(scores_history: dict):
         .properties(title="総合点スコア", width="container", height=300)
         .interactive()
     )
-    
+
     return chart
 
 
-def test_radar_chart():
-    with open("asset/1/history/レッソン2-2024-12-24_16-43-01.json", "r", encoding="utf-8") as f:
-        result = json.load(f)
-    fig1 = create_radar_chart(result)
-    fig1.savefig("radar_chart.png")
+def plot_detail_scores(scores_history: dict):
+    """Plot detailed scores components"""
+    # Convert dict to DataFrame
+    metrics = ["AccuracyScore", "FluencyScore", "CompletenessScore", "ProsodyScore"]
 
-def test_syllable_table():
-    with open("asset/1/history/レッソン2-2024-12-24_16-43-01.json", "r", encoding="utf-8") as f:
-        result = json.load(f)
-    html_table = create_syllable_table(result)
-    st.html(html_table)
+    # Check if data exists
+    if not scores_history or not any(
+        metric in scores_history and scores_history[metric] for metric in metrics
+    ):
+        # Return empty chart with message if no data
+        return alt.Chart(pd.DataFrame()).mark_text(
+            text="まだ学習記録がありません", size=20
+        )
+
+    data = pd.DataFrame(scores_history)
+    data["Attempt"] = range(1, len(data) + 1)
+
+    # Prepare data
+    detail_data = data.melt(
+        id_vars=["Attempt"], value_vars=metrics, var_name="Metric", value_name="Score"
+    )
+    metric_labels = {
+        "AccuracyScore": "正確性",
+        "FluencyScore": "流暢性",
+        "CompletenessScore": "完全性",
+        "ProsodyScore": "韻律",
+    }
+    detail_data["Metric"] = detail_data["Metric"].map(metric_labels).fillna(
+        detail_data["Metric"]
+    )
+
+    # Calculate y-axis range
+    y_min_detail = max(0, min(data[metrics].min()) - 5)
+    y_max_detail = min(100, max(data[metrics].max()) + 5)
+
+    chart = (
+        alt.Chart(detail_data)
+        .mark_line(point=True)
+        .encode(
+            x=alt.X(
+                "Attempt:Q",
+                axis=alt.Axis(
+                    tickMinStep=1,
+                    title="練習回数",
+                    values=list(range(1, 7)),
+                    tickCount=7,
+                    format="d",
+                    grid=True,
+                ),
+                scale=alt.Scale(domain=[1, 6]),
+            ),
+            y=alt.Y(
+                "Score:Q",
+                title="スコア",
+                scale=alt.Scale(domain=[y_min_detail, y_max_detail]),
+            ),
+            color=alt.Color(
+                "Metric:N",
+                scale=alt.Scale(range=["#00C957", "#4169E1", "#FFD700", "#FF69B4"]),
+                legend=alt.Legend(title="評価項目", orient="right"),
+            ),
+            tooltip=["Attempt", "Score", "Metric"],
+        )
+        .properties(title="詳細スコア", width="container", height=300)
+        .interactive()
+    )
+
+    return chart
+
+
+def plot_score_history():
+    # Check if learning_state exists and has scores_history
+    if (
+        "learning_state" not in st.session_state
+        or "scores_history" not in st.session_state.learning_state
+    ):
+        st.warning("まだ学習記録がありません")
+        return
+
+    lesson_index = st.session_state.lesson_index
+
+    if lesson_index not in st.session_state.learning_state["scores_history"]:
+        st.warning(f"レッスン {lesson_index + 1} の記録がありません")
+        return
+
+    # Check if data exists
+    scores = st.session_state.learning_state["scores_history"][lesson_index]
+    if not any(scores.values()):  # Check if all score lists are empty
+        st.warning("まだ学習記録がありません")
+        return
+
+    # Ensure all arrays have the same length before creating DataFrame
+    max_length = max(len(v) for v in scores.values() if v)
+    if max_length == 0:
+        st.warning("まだ学習記録がありません")
+        return
+
+    # Pad shorter arrays with None or use only the minimum length
+    min_length = min(len(v) for v in scores.values() if v)
+
+    # Create a clean scores dict with consistent lengths
+    clean_scores = {}
+    for key, value_list in scores.items():
+        if value_list:  # Only include non-empty lists
+            clean_scores[key] = value_list[:min_length]  # Truncate to minimum length
+
+    if not clean_scores or min_length == 0:
+        st.warning("まだ学習記録がありません")
+        return
+
+    # Create DataFrame only if we have data
+    data = pd.DataFrame(clean_scores)
+    if len(data) == 0:
+        st.warning("まだ学習記録がありません")
+        return
+
+    data["Attempt"] = range(1, len(data) + 1)
+
+    # Create two columns for charts
+    col1, col2 = st.columns([2, 3])
+
+    # Plot charts in columns
+    with col1:
+        overall_chart = plot_overall_score(data)
+        st.altair_chart(overall_chart, use_container_width=True)
+
+    with col2:
+        detail_chart = plot_detail_scores(data)
+        st.altair_chart(detail_chart, use_container_width=True)
 
 
 def radar_factory(num_vars, frame="circle"):
@@ -741,120 +859,19 @@ def create_doughnut_chart(data: dict, title: str):
     
     return chart
 
-
-def plot_detail_scores(scores_history: dict):
-    """Plot detailed scores components"""
-    # Convert dict to DataFrame
-    metrics = ["AccuracyScore", "FluencyScore", "CompletenessScore", "ProsodyScore"]
-    
-    # Check if data exists
-    if not scores_history or not any(metric in scores_history and scores_history[metric] for metric in metrics):
-        # Return empty chart with message if no data
-        return alt.Chart(pd.DataFrame()).mark_text(text="まだ学習記録がありません", size=20)
-    
-    data = pd.DataFrame(scores_history)
-    data["Attempt"] = range(1, len(data) + 1)
-    
-    # Prepare data
-    detail_data = data.melt(
-        id_vars=["Attempt"], value_vars=metrics, var_name="Metric", value_name="Score"
-    )
-
-    # Calculate y-axis range
-    y_min_detail = max(0, min(data[metrics].min()) - 5)
-    y_max_detail = min(100, max(data[metrics].max()) + 5)
-
-    chart = (
-        alt.Chart(detail_data)
-        .mark_line(point=True)
-        .encode(
-            x=alt.X(
-                "Attempt:Q",
-                axis=alt.Axis(
-                    tickMinStep=1,
-                    title="練習回数",
-                    values=list(range(1, 11)),
-                    tickCount=10,
-                    format="d",
-                    grid=True,
-                ),
-                scale=alt.Scale(domain=[1, 10]),
-            ),
-            y=alt.Y(
-                "Score:Q",
-                title="スコア",
-                scale=alt.Scale(domain=[y_min_detail, y_max_detail]),
-            ),
-            color=alt.Color(
-                "Metric:N",
-                scale=alt.Scale(range=["#00C957", "#4169E1", "#FFD700", "#FF69B4"]),
-                legend=alt.Legend(title="評価指標", orient="right"),
-            ),
-            tooltip=["Attempt", "Score", "Metric"],
-        )
-        .properties(title="詳細スコア", width="container", height=300)
-        .interactive()
-    )
-
-    return chart
+def test_radar_chart():
+    with open(
+        "asset/1/history/レッソン2-2024-12-24_16-43-01.json", "r", encoding="utf-8"
+    ) as f:
+        result = json.load(f)
+    fig1 = create_radar_chart(result)
+    fig1.savefig("radar_chart.png")
 
 
-def plot_score_history():
-    # Check if learning_state exists and has scores_history
-    if (
-        "learning_state" not in st.session_state
-        or "scores_history" not in st.session_state.learning_state
-    ):
-        st.warning("まだ学習記録がありません")
-        return
-
-    lesson_index = st.session_state.lesson_index
-
-    if lesson_index not in st.session_state.learning_state["scores_history"]:
-        st.warning(f"レッスン {lesson_index + 1} の記録がありません")
-        return
-
-    # Check if data exists
-    scores = st.session_state.learning_state["scores_history"][lesson_index]
-    if not any(scores.values()):  # Check if all score lists are empty
-        st.warning("まだ学習記録がありません")
-        return
-
-    # Ensure all arrays have the same length before creating DataFrame
-    max_length = max(len(v) for v in scores.values() if v)
-    if max_length == 0:
-        st.warning("まだ学習記録がありません")
-        return
-
-    # Pad shorter arrays with None or use only the minimum length
-    min_length = min(len(v) for v in scores.values() if v)
-
-    # Create a clean scores dict with consistent lengths
-    clean_scores = {}
-    for key, value_list in scores.items():
-        if value_list:  # Only include non-empty lists
-            clean_scores[key] = value_list[:min_length]  # Truncate to minimum length
-
-    if not clean_scores or min_length == 0:
-        st.warning("まだ学習記録がありません")
-        return
-
-    # Create DataFrame only if we have data
-    data = pd.DataFrame(clean_scores)
-    if len(data) == 0:
-        st.warning("まだ学習記録がありません")
-        return
-
-    data["Attempt"] = range(1, len(data) + 1)
-
-    # Create two columns for charts
-    col1, col2 = st.columns([2, 3])
-
-    # Plot charts in columns
-    with col1:
-        overall_chart = plot_overall_score(data)
-        st.altair_chart(overall_chart, use_container_width=True)
-
-    with col2:
-        detail_chart = plot_detail_scores(data)
-        st.altair_chart(detail_chart, use_container_width=True)
+def test_syllable_table():
+    with open(
+        "asset/1/history/レッソン2-2024-12-24_16-43-01.json", "r", encoding="utf-8"
+    ) as f:
+        result = json.load(f)
+    html_table = create_syllable_table(result)
+    st.html(html_table)
