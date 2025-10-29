@@ -50,6 +50,25 @@ def get_color(score):
         # needing significant improvement (0-39)
         return "#ff0000"  # red
 
+
+def is_omitted_word(word: dict) -> bool:
+    """Return True when Azure marks a reference word as omitted."""
+    if not word:
+        return False
+
+    assessment = word.get("PronunciationAssessment") or {}
+    error_type = assessment.get("ErrorType")
+    if error_type == "Omission":
+        return True
+
+    duration = word.get("Duration")
+    accuracy = assessment.get("AccuracyScore")
+    if (duration is None or duration == 0) and (accuracy is None or accuracy == 0):
+        return error_type in (None, "None", "Mispronunciation")
+
+    return False
+
+
 @st.fragment
 def create_waveform_plot(user, lesson, practice_times, lowest_word_phonemes_dict, pronunciation_result):
     """
@@ -89,24 +108,30 @@ def create_waveform_plot(user, lesson, practice_times, lowest_word_phonemes_dict
 
     # Display target audio with timestamp if available
     if target_start_end:
-        audix(
-            f"assets/{user}/resources/{lesson}.wav", 
-            key="target", 
-            start_time=target_start_end["start_time"], 
-            end_time=target_start_end["end_time"]
-        )
+        if target_start_end["start_time"] and target_start_end["end_time"] and target_start_end["end_time"] > target_start_end["start_time"]:
+            audix(
+                f"assets/{user}/resources/{lesson}.wav",
+                key="target",
+                start_time=target_start_end["start_time"],
+                end_time=target_start_end["end_time"]
+            )
+        else:
+            audix(f"assets/{user}/resources/{lesson}.wav", key="target")
     else:
         st.warning(f"Word '{lowest_word}' not found in target audio timestamps")
         audix(f"assets/{user}/resources/{lesson}.wav", key="target")
     
     # Display user audio with timestamp if available
     if user_start_end:
-        audix(
-            f"assets/{user}/history/{lesson}-{practice_times}.wav",
-            key="user",
-            start_time=user_start_end["start_time"],
-            end_time=user_start_end["end_time"]
-        )
+        if user_start_end["start_time"] and user_start_end["end_time"] and user_start_end["end_time"] > user_start_end["start_time"]:
+            audix(
+                f"assets/{user}/history/{lesson}-{practice_times}.wav",
+                key="user",
+                start_time=user_start_end["start_time"],
+                end_time=user_start_end["end_time"]
+            )
+        else:
+            audix(f"assets/{user}/history/{lesson}-{practice_times}.wav", key="user")
     else:
         st.warning(f"Word '{lowest_word}' not found in user audio timestamps")
         audix(f"assets/{user}/history/{lesson}-{practice_times}.wav", key="user")
@@ -127,8 +152,16 @@ def create_syllable_table(pronunciation_result):
     words = pronunciation_result["NBest"][0]["Words"]
     
     # Count omitted words
-    omitted_words = [w["Word"] for w in words if w.get("PronunciationAssessment", {}).get("ErrorType") == "Omission"]
-    omitted_text = ", ".join(omitted_words) if omitted_words else "-"
+    omitted_words = [
+        w.get("Word", "")
+        for w in words
+        if is_omitted_word(w) and w.get("Word")
+    ]
+    omitted_html = (
+        "".join(f'<span class="omit-badge">{word}</span>' for word in omitted_words)
+        if omitted_words
+        else "-"
+    )
     
     # Start building HTML with improved styling
     output = """
@@ -222,6 +255,22 @@ def create_syllable_table(pronunciation_result):
             font-weight: bold;
             font-size: 14px;
         }}
+        .omit-cell {{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            font-weight: normal;
+            font-size: 12px;
+        }}
+        .omit-badge {{
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+        }}
         .header-cell {{
             background-color: #1a4d6d !important;
         }}
@@ -242,7 +291,7 @@ def create_syllable_table(pronunciation_result):
             <td class="score-cell">{flu}</td>
             <td class="score-cell">{comp}</td>
             <td class="score-cell">{pros}</td>
-            <td style="font-size: 12px;">{omit}</td>
+            <td class="omit-cell">{omit}</td>
         </tr>
     """.format(
         pron=int(overall.get("PronScore", 0)),
@@ -250,27 +299,29 @@ def create_syllable_table(pronunciation_result):
         flu=int(overall.get("FluencyScore", 0)),
         comp=int(overall.get("CompletenessScore", 0)),
         pros=int(overall.get("ProsodyScore", 0)),
-        omit=omitted_text
+        omit=omitted_html
     )
     
     # Add word-level row
     output += "<tr>"
     for word in words:
-        word_text = word["Word"]
+        word_text = word.get("Word", "")
         word_assessment = word.get("PronunciationAssessment", {})
-        error_type = word_assessment.get("ErrorType", "None")
+        omitted = is_omitted_word(word)
         
-        if error_type == "Omission":
+        if omitted:
             word_score = None
             word_color = get_color(None)
+            score_display = "-"
         else:
             word_score = word_assessment.get("AccuracyScore", 0)
             word_color = get_color(word_score)
+            score_display = f"{int(word_score)}"
         
-        score_display = f"{int(word_score)}" if word_score is not None else "-"
+        text_color = "white" if (word_score is not None and word_score < 80) else "black"
         
         output += f"""
-        <td class="word-cell" style="background-color: {word_color}; color: {'white' if word_score and word_score < 80 else 'black'};">
+        <td class="word-cell" style="background-color: {word_color}; color: {text_color};">
             <div>{word_text}<span class="word-score">{score_display}</span></div>
         </td>
         """
@@ -280,23 +331,22 @@ def create_syllable_table(pronunciation_result):
     output += "<tr>"
     for word in words:
         word_assessment = word.get("PronunciationAssessment", {})
-        error_type = word_assessment.get("ErrorType", "None")
+        omitted = is_omitted_word(word)
         
-        if error_type == "Omission":
+        if omitted:
             output += '<td class="phoneme-row"><div class="phoneme-container">-</div></td>'
         elif "Phonemes" in word:
             phoneme_html = '<div class="phoneme-container">'
             for phoneme in word["Phonemes"]:
-                phoneme_text = phoneme["Phoneme"]
+                phoneme_text = phoneme.get("Phoneme", "")
                 phoneme_score = phoneme.get("PronunciationAssessment", {}).get("AccuracyScore", 0)
                 phoneme_color = get_color(phoneme_score)
-                # Use background color instead of text color for better visibility
-                text_color = 'white' if phoneme_score < 80 else 'black'
+                text_color = "white" if phoneme_score < 80 else "black"
                 phoneme_html += f'<div class="phoneme-item" style="background-color: {phoneme_color}; color: {text_color};">{phoneme_text}</div>'
             phoneme_html += '</div>'
             output += f'<td class="phoneme-row">{phoneme_html}</td>'
         else:
-            output += f'<td class="phoneme-row"><div class="phoneme-container">{word["Word"]}</div></td>'
+            output += f'<td class="phoneme-row"><div class="phoneme-container">{word.get("Word", "")}</div></td>'
     output += "</tr>"
     
     output += "</table></div>"

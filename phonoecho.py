@@ -18,6 +18,19 @@ from ai_feedback import (
 from audio_process import save_audio_to_file
 from chart import create_radar_chart, create_syllable_table, create_waveform_plot, create_doughnut_chart, plot_overall_score, plot_detail_scores
 
+def has_pronunciation_errors(error_data: dict) -> bool:
+    """Return True when the error dictionary contains any non-zero entry."""
+    if not error_data:
+        return False
+
+    for value in error_data.values():
+        if isinstance(value, list) and value:
+            return True
+        if isinstance(value, (int, float)) and value > 0:
+            return True
+    return False
+
+
 reset_page_padding()
 
 with st.sidebar:
@@ -63,8 +76,8 @@ with tabs[0]:
 
                 # For testing without re-recording audio
                 st.session_state.practice_times += 1
-                audio_file_path = f"assets/{user}/history/{lesson}-{3}.wav"
-                with open(f"assets/{user}/history/{lesson}-{3}.json", "r", encoding="utf-8") as f:
+                audio_file_path = f"assets/{user}/history/{lesson}-{1}.wav"
+                with open(f"assets/{user}/history/{lesson}-{1}.json", "r", encoding="utf-8") as f:
                     pronunciation_assessment_result = json.load(f)
                 scores_dict, errors_dict, lowest_word_phonemes_dict = (
                     parse_pronunciation_assessment(pronunciation_assessment_result)
@@ -89,7 +102,7 @@ with tabs[0]:
             height=450, horizontal_alignment="center", vertical_alignment="center"
         ):
             if pronunciation_assessment_result is not None:
-                if not errors_dict:
+                if has_pronunciation_errors(errors_dict):
                     current_errors_chart = create_doughnut_chart(errors_dict, "今回の練習")
                     st.altair_chart(current_errors_chart, use_container_width=True)
                 else:
@@ -157,7 +170,7 @@ with tabs[2]:
         ):
             # errors_history is always available from session_state
             if pronunciation_assessment_result is not None:
-                if not errors_dict:
+                if has_pronunciation_errors(st.session_state.errors_history):
                     total_errors_chart = create_doughnut_chart(
                         st.session_state.errors_history, "総合"
                     )
