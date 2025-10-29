@@ -769,31 +769,6 @@ def create_radar_chart(pronunciation_result):
 
     return fig
 
-def update_scores_history(session_state, scores_dict):
-    """Update scores history in session state."""
-    for key, value in scores_dict.items():
-        if key in session_state.scores_history:
-            session_state.scores_history[key].append(value)
-        else:
-            session_state.scores_history[key] = [value]
-
-def update_errors_history(session_state, errors_dict):
-    """Update errors history in session state.
-    
-    Args:
-        session_state: Streamlit session state object
-        errors_dict: Dictionary with error types as keys and lists of words as values
-                    Format: {"Omission": ["word1", "word2"], ...}
-    """
-    for key, value in errors_dict.items():
-        # Convert list to count
-        count = len(value) if isinstance(value, list) else value
-        
-        if key in session_state.errors_history:
-            session_state.errors_history[key] += count
-        else:
-            session_state.errors_history[key] = count
-
 
 def create_doughnut_chart(data: dict, title: str):
     """

@@ -62,7 +62,7 @@ def initialize_session_state(session_state, user:int, lesson: int):
         session_state.pronunciation_config = initialize_azure()
     if "ai_messages" not in session_state:
         session_state.ai_messages = [
-            {"role": "system", "content": load_system_prompt()}
+            {"role": "system", "content": load_system_prompt("assets/system_prompt/feedback_system_prompt.txt")}
         ]
     if "practice_times" not in session_state:
         session_state.practice_times = 0
@@ -86,8 +86,44 @@ def initialize_session_state(session_state, user:int, lesson: int):
             "syllable_table": None,
             "pron_score": None,
         }
+    if "ai_summary_messages" not in session_state:
+        session_state.ai_summary_messages = [
+            {
+                "role": "system",
+                "content": load_system_prompt(
+                    "assets/system_prompt/feedback_system_prompt.txt"
+                ),
+            }
+        ]
 
 def refresh_page_to_remove_ghost(session_state):
     if "refreshed" not in session_state:
         session_state.refreshed = True
         st.rerun()
+
+
+def update_scores_history(session_state, scores_dict):
+    """Update scores history in session state."""
+    for key, value in scores_dict.items():
+        if key in session_state.scores_history:
+            session_state.scores_history[key].append(value)
+        else:
+            session_state.scores_history[key] = [value]
+
+
+def update_errors_history(session_state, errors_dict):
+    """Update errors history in session state.
+
+    Args:
+        session_state: Streamlit session state object
+        errors_dict: Dictionary with error types as keys and lists of words as values
+                    Format: {"Omission": ["word1", "word2"], ...}
+    """
+    for key, value in errors_dict.items():
+        # Convert list to count
+        count = len(value) if isinstance(value, list) else value
+
+        if key in session_state.errors_history:
+            session_state.errors_history[key] += count
+        else:
+            session_state.errors_history[key] = count

@@ -25,9 +25,9 @@ def load_ai_history(user:int, lesson:int):
     return history
 
 @st.cache_data
-def load_system_prompt():
+def load_system_prompt(file_path: str = "system_prompt.txt"):
     """Load system prompt from file."""
-    with open("assets/system_prompt.txt", "r", encoding="utf-8") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         system_prompt = f.read()
     
     return system_prompt
@@ -41,3 +41,13 @@ def update_user_prompt(sentence, lowest_word_phonemes: dict):
     """
     user_prompt += str(lowest_word_phonemes)
     return user_prompt
+
+def update_summary_prompt(scores_history, errors_history):
+    """Create a summary prompt for AI Summary."""
+    summary_prompt = f"""
+    あなたは system prompt で定義された「学習者の発音成績サマライザー」として、日本語で返してください。
+    3段落構成：①成果ハイライト ②推移の要約 ③停滞・ばらつきの観測
+    発音スコアの歴史データ{scores_history}
+    発音エラーの歴史データ{errors_history}
+    """
+    return summary_prompt
