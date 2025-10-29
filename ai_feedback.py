@@ -172,7 +172,7 @@ def create_openai_client():
         client = AzureOpenAI(
             azure_endpoint=st.secrets["AzureGPT"]["AZURE_OPENAI_ENDPOINT"],
             api_key=st.secrets["AzureGPT"]["AZURE_OPENAI_API_KEY"],
-            api_version="2025-08-07",
+            api_version="2025-01-01-preview",
         )
     except Exception as e:
         print(f"Error initializing OpenAI client: {e}")
