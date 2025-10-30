@@ -216,116 +216,199 @@ def create_syllable_table(pronunciation_result):
             border-radius: 8px;
             padding: 10px;
         }}
-        .eval-table {{ 
-            border-collapse: collapse; 
-            min-width: 100%;
+        .scoreboard {{
+            display: inline-flex;
+            flex-wrap: nowrap;
+            gap: 0;
+            margin-bottom: 14px;
+        }}
+        .score-card {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #1a4d6d;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0;
+            padding: 10px 16px;
+            min-width: 90px;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+            flex: 0 0 auto;
+        }}
+        .score-card:first-child {{
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+        }}
+        .score-card:last-child {{
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }}
+        .score-card + .score-card {{
+            border-left: 0;
+        }}
+        .score-card-title {{
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 6px;
+        }}
+        .score-card-value {{
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1;
+        }}
+        .eval-table {{
+            border-collapse: collapse;
+            width: 100%;
             font-size: 14px;
             background-color: #0E1117;
             color: white;
-            table-layout: auto;
         }}
-        .eval-table th {{ 
-            background-color: #2c5f7c;
-            border: 2px solid #555;
-            padding: 12px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 12px;
-            white-space: nowrap;
-        }}
-        .eval-table td {{ 
+        .eval-table td {{
             border: 2px solid #555;
             padding: 10px;
             text-align: center;
-            min-width: 80px;
         }}
-        .word-cell {{ 
+        .eval-table td.word-row-wrapper {{
+            padding: 0;
+            border: none;
+        }}
+        .word-card-row {{
+            display: inline-flex;
+            flex-wrap: nowrap;
+            gap: 0;
+            width: 100%;
+        }}
+        .word-card {{
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex: 0 0 auto;
+            width: var(--card-width, 80px);
+            min-width: var(--card-width, 80px);
+            background-color: #111827;
+            border: 1px solid #2f3948;
+            border-radius: 0;
+            overflow: hidden;
+        }}
+        .word-card:first-child {{
+            border-top-left-radius: 6px;
+            border-bottom-left-radius: 6px;
+        }}
+        .word-card:last-child {{
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+        }}
+        .word-card + .word-card {{
+            border-left: 0;
+        }}
+        .word-header {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
             font-size: 16px;
-            font-weight: bold;
-            position: relative;
-            padding: 15px 10px;
-            min-width: 100px;
+            font-weight: 600;
+            color: #f9fafb;
+        }}
+        .word-text {{
+            flex: 1 1 auto;
+            text-align: left;
+            white-space: nowrap;
         }}
         .word-score {{
-            position: absolute;
-            top: 4px;
-            right: 6px;
+            margin-left: 8px;
             font-size: 12px;
-            font-weight: normal;
+            font-weight: 500;
             opacity: 0.9;
         }}
-        .eval-table td.phoneme-row {{
-            font-size: 16px;
-            padding: 6px 4px !important;
-            height: 100%;
-            vertical-align: top;
-        }}
-        .phoneme-container {{
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-content: flex-start;
-            gap: 6px 4px;
+        .phoneme-strip {{
+            display: grid;
             width: 100%;
-            height: 100%;
-            padding: 4px;
+            grid-template-columns: repeat(var(--phoneme-count, 1), minmax(0, 1fr));
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background-color: rgba(17, 24, 39, 0.8);
         }}
         .phoneme-item {{
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 2.4ch;
-            max-width: 2.4ch;
-            padding: 4px 0;
-            margin: 0;
-            font-weight: 600;
-            border-radius: 4px;
+            width: 100%;
+            padding: 6px 8px;
+            border-right: 1px solid rgba(15, 23, 42, 0.6);
             box-sizing: border-box;
+            font-weight: 600;
             white-space: nowrap;
         }}
-        .score-row {{
-            font-size: 14px;
-            padding: 8px;
-            background-color: #0a0a0a;
+        .phoneme-item:last-child {{
+            border-right: none;
         }}
-        .score-badge {{
-            display: inline-block;
-            margin: 2px 3px;
-            padding: 6px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            min-width: 35px;
-            border: 1px solid rgba(255,255,255,0.2);
+        .phoneme-placeholder {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            grid-column: 1 / -1;
+            font-weight: 500;
         }}
-        .score-cell {{
-            font-weight: bold;
-            font-size: 14px;
+        .eval-table td.error-row-wrapper {{
+            padding: 0;
+            border: none;
         }}
-        .error-row td {{
-            padding: 8px 6px;
+        .error-card-row {{
+            display: inline-flex;
+            flex-wrap: nowrap;
+            gap: 0;
+            width: 100%;
+        }}
+        .error-card {{
+            flex: 0 0 auto;
+            padding: 8px 10px;
             font-size: 13px;
             font-weight: 600;
+            color: white;
+            text-align: center;
+            border: 1px solid rgba(15, 23, 42, 0.2);
+            border-radius: 0;
         }}
-        .header-cell {{
-            background-color: #1a4d6d !important;
+        .error-card:first-child {{
+            border-top-left-radius: 6px;
+            border-bottom-left-radius: 6px;
+        }}
+        .error-card:last-child {{
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+        }}
+        .error-card + .error-card {{
+            border-left: 0;
         }}
     </style>
     <div class="table-container">
-    <table class="eval-table">
-        <tr>
-            <th class="header-cell">Pronunciation Score</th>
-            <th class="header-cell">Accuracy Score</th>
-            <th class="header-cell">Fluency Score</th>
-            <th class="header-cell">Completeness Score</th>
-            <th class="header-cell">Prosody Score</th>
-        </tr>
-        <tr>
-            <td class="score-cell">{pron}</td>
-            <td class="score-cell">{acc}</td>
-            <td class="score-cell">{flu}</td>
-            <td class="score-cell">{comp}</td>
-            <td class="score-cell">{pros}</td>
-        </tr>
+        <div class="scoreboard">
+            <div class="score-card">
+                <span class="score-card-title">総合スコア</span>
+                <span class="score-card-value">{pron}</span>
+            </div>
+            <div class="score-card">
+                <span class="score-card-title">正確性</span>
+                <span class="score-card-value">{acc}</span>
+            </div>
+            <div class="score-card">
+                <span class="score-card-title">流暢性</span>
+                <span class="score-card-value">{flu}</span>
+            </div>
+            <div class="score-card">
+                <span class="score-card-title">完全性</span>
+                <span class="score-card-value">{comp}</span>
+            </div>
+            <div class="score-card">
+                <span class="score-card-title">韻律</span>
+                <span class="score-card-value">{pros}</span>
+            </div>
+        </div>
+        <table class="eval-table">
     """.format(
         pron=int(overall.get("PronScore", 0)),
         acc=int(overall.get("AccuracyScore", 0)),
@@ -333,53 +416,96 @@ def create_syllable_table(pronunciation_result):
         comp=int(overall.get("CompletenessScore", 0)),
         pros=int(overall.get("ProsodyScore", 0)),
     )
-    
-    # Add word-level row
-    output += "<tr>"
+
+    def get_contrast_text_color(hex_color: str) -> str:
+        """Return readable text color for the given background."""
+        if not isinstance(hex_color, str) or not hex_color.startswith("#") or len(hex_color) != 7:
+            return "#f9fafb"
+
+        try:
+            r = int(hex_color[1:3], 16)
+            g = int(hex_color[3:5], 16)
+            b = int(hex_color[5:7], 16)
+        except ValueError:
+            return "#f9fafb"
+
+        luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        return "#0f172a" if luminance > 160 else "#f9fafb"
+
+    phoneme_unit_px = 26
+    word_char_unit_px = 12
+    base_padding_px = 32
+    min_card_width_px = 52
+
+    word_views = []
     for word in words:
         word_text = word.get("Word", "")
         word_assessment = word.get("PronunciationAssessment", {})
+        phonemes = word.get("Phonemes") or []
         omitted = is_omitted_word(word)
-        
+
         if omitted:
             word_score = None
             word_color = get_color(None)
             score_display = "-"
+            phoneme_count = 1
         else:
             word_score = word_assessment.get("AccuracyScore", 0)
             word_color = get_color(word_score)
             score_display = f"{int(word_score)}"
-        
-        text_color = "black"
-        
-        output += f"""
-        <td class="word-cell" style="background-color: {word_color}; color: {text_color};">
-            <div>{word_text}<span class="word-score">{score_display}</span></div>
-        </td>
-        """
-    output += "</tr>"
-    
-    # Add phoneme-level row (with color-coded phonemes)
-    output += "<tr>"
-    for word in words:
-        word_assessment = word.get("PronunciationAssessment", {})
-        omitted = is_omitted_word(word)
-        
-        if omitted:
-            output += '<td class="phoneme-row"><div class="phoneme-container">-</div></td>'
-        elif "Phonemes" in word:
-            phoneme_html = '<div class="phoneme-container">'
-            for phoneme in word["Phonemes"]:
+            phoneme_count = max(len(phonemes), 1)
+
+        header_text_color = get_contrast_text_color(word_color)
+        header_html = (
+            f'<div class="word-header" style="background-color: {word_color}; color: {header_text_color};">'
+            f'<span class="word-text">{word_text}</span>'
+            f'<span class="word-score">{score_display}</span>'
+            "</div>"
+        )
+
+        card_min_width = max(
+            phoneme_count * phoneme_unit_px,
+            len(word_text) * word_char_unit_px + base_padding_px,
+            min_card_width_px,
+        )
+
+        if omitted or not phonemes:
+            phoneme_html = (
+                '<div class="phoneme-strip">'
+                '<span class="phoneme-placeholder">-</span>'
+                "</div>"
+            )
+        else:
+            phoneme_html = '<div class="phoneme-strip">'
+            for phoneme in phonemes:
                 phoneme_text = phoneme.get("Phoneme", "")
                 phoneme_score = phoneme.get("PronunciationAssessment", {}).get("AccuracyScore", 0)
                 phoneme_color = get_color(phoneme_score)
-                text_color = "white" if phoneme_score < 80 else "black"
-                phoneme_html += f'<div class="phoneme-item" style="background-color: {phoneme_color}; color: {text_color};">{phoneme_text}</div>'
-            phoneme_html += '</div>'
-            output += f'<td class="phoneme-row">{phoneme_html}</td>'
-        else:
-            output += f'<td class="phoneme-row"><div class="phoneme-container">{word.get("Word", "")}</div></td>'
-    output += "</tr>"
+                phoneme_text_color = get_contrast_text_color(phoneme_color)
+                phoneme_html += (
+                    f'<span class="phoneme-item" style="background-color: {phoneme_color}; color: {phoneme_text_color};">'
+                    f"{phoneme_text}</span>"
+                )
+            phoneme_html += "</div>"
+
+        card_style = f"--card-width: {card_min_width}px; --phoneme-count: {phoneme_count};"
+        word_views.append(
+            {
+                "card_html": f'<div class="word-card" style="{card_style}">{header_html}{phoneme_html}</div>',
+                "width": card_min_width,
+                "word_dict": word,
+                "omitted": omitted,
+            }
+        )
+
+    word_cards_html = "".join(view["card_html"] for view in word_views)
+    output += (
+        '<tr class="word-row">'
+        '<td class="word-row-wrapper" colspan="5">'
+        f'<div class="word-card-row">{word_cards_html}</div>'
+        "</td>"
+        "</tr>"
+    )
 
     # Add error-type row
     def format_error_label(word_dict, omitted_flag):
@@ -394,12 +520,21 @@ def create_syllable_table(pronunciation_result):
 
         return "&#128077;", "#1f4028"
 
-    output += '<tr class="error-row">'
-    for word in words:
-        omitted = is_omitted_word(word)
-        label, bg_color = format_error_label(word, omitted)
-        output += f'<td class="error-cell" style="background-color: {bg_color}; color: white;">{label}</td>'
-    output += "</tr>"
+    error_cards_html = []
+    for view in word_views:
+        label, bg_color = format_error_label(view["word_dict"], view["omitted"])
+        width = view["width"]
+        error_cards_html.append(
+            f'<div class="error-card" style="background-color: {bg_color}; width: {width}px; min-width: {width}px;">{label}</div>'
+        )
+
+    output += (
+        '<tr class="error-row">'
+        '<td class="error-row-wrapper" colspan="5">'
+        f'<div class="error-card-row">{"".join(error_cards_html)}</div>'
+        "</td>"
+        "</tr>"
+    )
     
     output += "</table></div>"
     return output
@@ -969,3 +1104,5 @@ def test_syllable_table():
         result = json.load(f)
     html_table = create_syllable_table(result)
     st.html(html_table)
+
+
