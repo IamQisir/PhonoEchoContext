@@ -51,6 +51,59 @@ def get_color(score):
         return "#ff0000"  # red
 
 
+ERROR_TYPE_LABELS_JA = {
+    "omission": "省略",
+    "mispronunciation": "発音誤り",
+    "insertion": "挿入",
+    "none": "問題なし",
+    "unknown": "不明",
+}
+
+DISPLAY_ERROR_KEYS = {"omission", "mispronunciation", "insertion"}
+
+ERROR_CHART_COLOR_MAP = {
+    "omission": "#FF4B4B",
+    "mispronunciation": "#FFC000",
+    "insertion": "#00B050",
+}
+
+ERROR_CHART_ORDER = [
+    "omission",
+    "mispronunciation",
+    "insertion",
+]
+
+ERROR_ROW_COLOR_MAP = {
+    "omission": "#b45309",
+    "mispronunciation": "#b91c1c",
+    "insertion": "#0ea5e9",
+    "unknown": "#6b7280",
+}
+
+
+def normalize_error_key(value):
+    """Normalize Azure error type names so they can be mapped reliably."""
+    if not value:
+        return "none"
+    return (
+        str(value)
+        .replace("_", "")
+        .replace("-", "")
+        .replace(" ", "")
+        .lower()
+    )
+
+
+def get_error_label_ja(value):
+    """Return the Japanese label for a given error type."""
+    key = normalize_error_key(value)
+    if key in ERROR_TYPE_LABELS_JA:
+        return ERROR_TYPE_LABELS_JA[key]
+    if value:
+        return str(value)
+    return ERROR_TYPE_LABELS_JA["unknown"]
+
+
 def is_omitted_word(word: dict) -> bool:
     """Return True when Azure marks a reference word as omitted."""
     if not word:
@@ -151,18 +204,6 @@ def create_syllable_table(pronunciation_result):
     overall = pronunciation_result["NBest"][0]["PronunciationAssessment"]
     words = pronunciation_result["NBest"][0]["Words"]
     
-    # Count omitted words
-    omitted_words = [
-        w.get("Word", "")
-        for w in words
-        if is_omitted_word(w) and w.get("Word")
-    ]
-    omitted_html = (
-        "".join(f'<span class="omit-badge">{word}</span>' for word in omitted_words)
-        if omitted_words
-        else "-"
-    )
-    
     # Start building HTML with improved styling
     output = """
     <style>
@@ -213,29 +254,34 @@ def create_syllable_table(pronunciation_result):
             font-weight: normal;
             opacity: 0.9;
         }}
-        .phoneme-row {{
+        .eval-table td.phoneme-row {{
             font-size: 16px;
-            padding: 0;
+            padding: 6px 4px !important;
+            height: 100%;
+            vertical-align: top;
         }}
         .phoneme-container {{
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
-            align-items: stretch;
+            align-content: flex-start;
+            gap: 6px 4px;
+            width: 100%;
             height: 100%;
-            min-height: 25px;
+            padding: 4px;
         }}
         .phoneme-item {{
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0;
-            font-weight: 500;
-            border-right: 2px solid #555;
-            flex: 1;
-            min-width: 40px;
-        }}
-        .phoneme-item:last-child {{
-            border-right: none;
+            min-width: 2.4ch;
+            max-width: 2.4ch;
+            padding: 4px 0;
+            margin: 0;
+            font-weight: 600;
+            border-radius: 4px;
+            box-sizing: border-box;
+            white-space: nowrap;
         }}
         .score-row {{
             font-size: 14px;
@@ -255,20 +301,9 @@ def create_syllable_table(pronunciation_result):
             font-weight: bold;
             font-size: 14px;
         }}
-        .omit-cell {{
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 6px;
-            font-weight: normal;
-            font-size: 12px;
-        }}
-        .omit-badge {{
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 9999px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .error-row td {{
+            padding: 8px 6px;
+            font-size: 13px;
             font-weight: 600;
         }}
         .header-cell {{
@@ -283,7 +318,6 @@ def create_syllable_table(pronunciation_result):
             <th class="header-cell">Fluency Score</th>
             <th class="header-cell">Completeness Score</th>
             <th class="header-cell">Prosody Score</th>
-            <th class="header-cell">Words Omitted</th>
         </tr>
         <tr>
             <td class="score-cell">{pron}</td>
@@ -291,7 +325,6 @@ def create_syllable_table(pronunciation_result):
             <td class="score-cell">{flu}</td>
             <td class="score-cell">{comp}</td>
             <td class="score-cell">{pros}</td>
-            <td class="omit-cell">{omit}</td>
         </tr>
     """.format(
         pron=int(overall.get("PronScore", 0)),
@@ -299,7 +332,6 @@ def create_syllable_table(pronunciation_result):
         flu=int(overall.get("FluencyScore", 0)),
         comp=int(overall.get("CompletenessScore", 0)),
         pros=int(overall.get("ProsodyScore", 0)),
-        omit=omitted_html
     )
     
     # Add word-level row
@@ -318,7 +350,7 @@ def create_syllable_table(pronunciation_result):
             word_color = get_color(word_score)
             score_display = f"{int(word_score)}"
         
-        text_color = "white" if (word_score is not None and word_score < 80) else "black"
+        text_color = "black"
         
         output += f"""
         <td class="word-cell" style="background-color: {word_color}; color: {text_color};">
@@ -347,6 +379,26 @@ def create_syllable_table(pronunciation_result):
             output += f'<td class="phoneme-row">{phoneme_html}</td>'
         else:
             output += f'<td class="phoneme-row"><div class="phoneme-container">{word.get("Word", "")}</div></td>'
+    output += "</tr>"
+
+    # Add error-type row
+    def format_error_label(word_dict, omitted_flag):
+        assessment = word_dict.get("PronunciationAssessment", {}) or {}
+        error_type = assessment.get("ErrorType")
+        key = "omission" if omitted_flag else normalize_error_key(error_type)
+
+        if key in DISPLAY_ERROR_KEYS:
+            label = ERROR_TYPE_LABELS_JA.get(key, get_error_label_ja(error_type))
+            color = ERROR_ROW_COLOR_MAP.get(key, ERROR_ROW_COLOR_MAP["unknown"])
+            return label, color
+
+        return "&#128077;", "#1f4028"
+
+    output += '<tr class="error-row">'
+    for word in words:
+        omitted = is_omitted_word(word)
+        label, bg_color = format_error_label(word, omitted)
+        output += f'<td class="error-cell" style="background-color: {bg_color}; color: white;">{label}</td>'
     output += "</tr>"
     
     output += "</table></div>"
@@ -833,30 +885,52 @@ def create_doughnut_chart(data: dict, title: str):
     Returns:
         Altair chart object
     """
-    # Convert list values to counts if necessary
-    processed_data = {}
+    # Convert list values to counts if necessary, restricting to displayable error types
+    processed_counts = {}
     for key, value in data.items():
-        if isinstance(value, list):
-            processed_data[key] = len(value)
-        elif isinstance(value, (int, float)):
-            processed_data[key] = value
-        else:
-            # Skip non-numeric, non-list values
+        normalized = normalize_error_key(key)
+        if normalized not in DISPLAY_ERROR_KEYS:
             continue
-    
-    # Filter out zero counts (now safe since all values are numeric)
-    processed_data = {k: v for k, v in processed_data.items() if v > 0}
+
+        if isinstance(value, list):
+            count = len(value)
+        elif isinstance(value, (int, float)):
+            count = value
+        else:
+            continue
+
+        if count > 0:
+            processed_counts[normalized] = processed_counts.get(normalized, 0) + count
     
     # Check if data is empty
-    if not processed_data:
+    if not processed_counts:
         return alt.Chart(pd.DataFrame()).mark_text(
-            text="エラーなし", 
+            text="エラーはありません",
             size=20,
             color="green"
         ).properties(title=title, width=300, height=300)
     
-    # Convert data to DataFrame
-    df = pd.DataFrame(list(processed_data.items()), columns=["Error", "Count"])
+    records = [
+        {
+            "Key": key,
+            "Label": ERROR_TYPE_LABELS_JA.get(key, key.title()),
+            "Count": processed_counts[key],
+        }
+        for key in ERROR_CHART_ORDER
+        if key in processed_counts
+    ]
+
+    if not records:
+        return alt.Chart(pd.DataFrame()).mark_text(
+            text="エラーはありません",
+            size=20,
+            color="green"
+        ).properties(title=title, width=300, height=300)
+
+    df = pd.DataFrame(records)
+    
+    color_domain = [record["Label"] for record in records]
+    color_range = [ERROR_CHART_COLOR_MAP.get(record["Key"], "#6b7280") for record in records]
 
     chart = (
         alt.Chart(df)
@@ -864,20 +938,15 @@ def create_doughnut_chart(data: dict, title: str):
         .encode(
             theta=alt.Theta(field="Count", type="quantitative"),
             color=alt.Color(
-                field="Error",
+                field="Label",
                 type="nominal",
-                scale=alt.Scale(
-                    range=[
-                        "#FF4B4B",
-                        "#FFC000",
-                        "#00B050",
-                        "#2F75B5",
-                        "#7030A0",
-                        "#000000",
-                    ]
-                ),
+                scale=alt.Scale(domain=color_domain, range=color_range),
+                legend=alt.Legend(title="エラータイプ"),
             ),
-            tooltip=["Error", "Count"],
+            tooltip=[
+                alt.Tooltip("Label:N", title="エラータイプ"),
+                alt.Tooltip("Count:Q", title="件数"),
+            ],
         )
         .properties(title=title, width=300, height=300)
     )

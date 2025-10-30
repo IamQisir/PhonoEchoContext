@@ -105,9 +105,10 @@ def parse_pronunciation_assessment(pronunciation_result):
             word_assessment = word.get("PronunciationAssessment", {})
             error_type = word_assessment.get("ErrorType", "None")
             accuracy_score = word_assessment.get("AccuracyScore", 100.0)
+            omitted = _is_word_omitted(word)
             
             # Collect word-level errors (only basic pronunciation errors)
-            if error_type == "Omission":
+            if omitted:
                 errors_dict["Omission"].append(word_text)
             elif error_type == "Mispronunciation":
                 errors_dict["Mispronunciation"].append(word_text)
@@ -133,7 +134,7 @@ def parse_pronunciation_assessment(pronunciation_result):
             #     errors_dict["MissingBreak"].append(word_text)
             
             # Track lowest scoring word (only for non-omitted words)
-            if error_type != "Omission" and accuracy_score < lowest_score:
+            if not omitted and accuracy_score < lowest_score:
                 lowest_score = accuracy_score
                 lowest_word = word
         
@@ -273,3 +274,19 @@ if __name__ == "__main__":
         )
 
 
+def _is_word_omitted(word: dict) -> bool:
+    """Reuse omission logic so aggregated errors align with UI."""
+    if not word:
+        return False
+
+    assessment = word.get("PronunciationAssessment") or {}
+    error_type = assessment.get("ErrorType")
+    if error_type == "Omission":
+        return True
+
+    duration = word.get("Duration")
+    accuracy = assessment.get("AccuracyScore")
+    if (duration is None or duration == 0) and (accuracy is None or accuracy == 0):
+        return error_type in (None, "None", "Mispronunciation")
+
+    return False
