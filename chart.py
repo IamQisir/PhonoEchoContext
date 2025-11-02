@@ -902,18 +902,23 @@ def create_radar_chart(pronunciation_result):
     # Create radar chart with pentagon frame
     theta = radar_factory(N, frame="polygon")
 
-    # Create figure with wider, lower aspect ratio: 800px x 200px (8.0 x 2.0 inches at 100 DPI)
-    fig, ax = plt.subplots(figsize=(8.0, 2.0), subplot_kw=dict(projection="radar"))
+    # Create figure and keep the plotting area square so grid spacing stays uniform
+    fig, ax = plt.subplots(figsize=(6.0, 4.0), subplot_kw=dict(projection="radar"))
     fig.subplots_adjust(top=0.92, bottom=0.08, left=0.12, right=0.88)
+    ax.set_aspect("equal", adjustable="box")
 
-    # Set radial gridlines with WHITE text (reduced font size)
+    # Configure evenly spaced radial gridlines and hide numeric labels
+    grid_levels = np.linspace(0.2, 1.0, 5)
+    grid_labels = [f"{int(level * 100)}" for level in grid_levels]
     ax.set_rgrids(
-        [0.2, 0.4, 0.6, 0.8, 1.0],
-        labels=["20", "40", "60", "80", "100"],
+        grid_levels,
+        labels=grid_labels,
         angle=0,
-        fontsize=7,  # Reduced from 9
+        fontsize=7,
         color="white",
     )
+    ax.set_ylim(0, 1)
+    ax.yaxis.grid(True, linestyle="--", linewidth=0.8, color="white", alpha=0.25)
 
     # Add inner dashed pentagon for reference (e.g., at 60% level)
     reference_level = 0.6
@@ -922,23 +927,23 @@ def create_radar_chart(pronunciation_result):
         theta,
         reference_values,
         linestyle="--",
-        linewidth=1.5,
-        color="#FF6B6B",
-        alpha=0.6,
+        linewidth=1.0,
+        color="white",
+        alpha=0.35,
     )
-    ax.fill(theta, reference_values, alpha=0.05, color="#FF6B6B")
+    ax.fill(theta, reference_values, alpha=0.05, color="white")
 
     # Plot the actual scores
     ax.plot(
         theta,
         scores,
         "o-",
-        linewidth=3,
+        linewidth=1.0,
         color="#1E88E5",
-        markersize=10,
+        markersize=3.5,
         markerfacecolor="#1E88E5",
         markeredgecolor="white",
-        markeredgewidth=2,
+        markeredgewidth=0.7,
     )
     ax.fill(theta, scores, alpha=0.25, color="#1E88E5")
 
@@ -1087,6 +1092,46 @@ def create_doughnut_chart(data: dict, title: str):
     )
     
     return chart
+
+def create_metric_cards(practice_times: int, scores_history: dict):
+    metric_card_cols = st.columns(5)
+    if practice_times <= 1:
+        metric_card_cols[0].metric("総合スコア", scores_history.get("PronScore", [0])[-1])
+        metric_card_cols[1].metric("正確性", scores_history.get("AccuracyScore", [0])[-1])
+        metric_card_cols[2].metric("流暢性", scores_history.get("FluencyScore", [0])[-1])
+        metric_card_cols[3].metric("完全性", scores_history.get("CompletenessScore", [0])[-1])
+        metric_card_cols[4].metric("韻律", scores_history.get("ProsodyScore", [0])[-1])
+    else:
+        metric_card_cols[0].metric(
+            "総合スコア",
+            scores_history.get("PronScore", [0])[-1],
+            delta=scores_history.get("PronScore", [0])[-1]
+            - scores_history.get("PronScore", [0])[-2],
+        )
+        metric_card_cols[1].metric(
+            "正確性",
+            scores_history.get("PronAccuracy", [0])[-1],
+            delta=scores_history.get("PronAccuracy", [0])[-1]
+            - scores_history.get("PronAccuracy", [0])[-2],
+        )
+        metric_card_cols[2].metric(
+            "流暢性",
+            scores_history.get("PronFluency", [0])[-1],
+            delta=scores_history.get("PronFluency", [0])[-1]
+            - scores_history.get("PronFluency", [0])[-2],
+        )
+        metric_card_cols[3].metric(
+            "完全性",
+            scores_history.get("PronCompleteness", [0])[-1],
+            delta=scores_history.get("PronCompleteness", [0])[-1]
+            - scores_history.get("PronCompleteness", [0])[-2],
+        )
+        metric_card_cols[4].metric(
+            "韻律",
+            scores_history.get("PronProsody", [0])[-1],
+            delta=scores_history.get("PronProsody", [0])[-1]
+            - scores_history.get("PronProsody", [0])[-2],
+        )
 
 def test_radar_chart():
     with open(

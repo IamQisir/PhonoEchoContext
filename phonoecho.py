@@ -16,7 +16,15 @@ from ai_feedback import (
     parse_pronunciation_assessment,
 )
 from audio_process import save_audio_to_file
-from chart import create_radar_chart, create_syllable_table, create_waveform_plot, create_doughnut_chart, plot_overall_score, plot_detail_scores
+from chart import (
+    create_radar_chart,
+    create_syllable_table,
+    create_waveform_plot,
+    create_doughnut_chart,
+    plot_overall_score,
+    plot_detail_scores,
+    create_metric_cards
+)
 
 def has_pronunciation_errors(error_data: dict) -> bool:
     """Return True when the error dictionary contains any non-zero entry."""
@@ -97,9 +105,17 @@ with tabs[0]:
             else:
                 st.html("<h1 style='text-align: center;'>レーダーチャート</h1>")
 
-        # 2. create and display AI feedback
+        # 1.5 metric cards for scores
         with st.container(
-            height=450, horizontal_alignment="center", vertical_alignment="center"
+            height=150, horizontal_alignment="center", vertical_alignment="center"):
+            if pronunciation_assessment_result is not None:
+                create_metric_cards(st.session_state.practice_times, st.session_state.scores_history)
+            else:
+                st.html("<h1 style='text-align: center;'>スコアカード</h1>")
+
+        # 2. create and display current errors doughnut chart
+        with st.container(
+            height=350, horizontal_alignment="center", vertical_alignment="center"
         ):
             if pronunciation_assessment_result is not None:
                 if has_pronunciation_errors(errors_dict):
