@@ -93,6 +93,31 @@ with tabs[0]:
                 update_scores_history(st.session_state, scores_dict)
                 update_errors_history(st.session_state, errors_dict)
 
+                # Get AI feedback and write it streamingly later
+                user_prompt = update_user_prompt(
+                    reference_text, lowest_word_phonemes_dict
+                )
+                st.session_state.ai_messages.append(
+                    {"role": "user", "content": user_prompt}
+                )
+
+                ai_feedback_generator = get_ai_feedback(
+                    st.session_state.openai_client,
+                    st.session_state.ai_messages,
+                )
+
+                # Get AI summary and write it streamingly later
+                summary_prompt = update_summary_prompt(
+                    st.session_state.scores_history, st.session_state.errors_history
+                )
+                st.session_state.ai_summary_messages.append(
+                    {"role": "user", "content": summary_prompt}
+                )
+                ai_summary_generator = get_ai_feedback(
+                    st.session_state.openai_client,
+                    st.session_state.ai_summary_messages,
+                )
+
     with cols[1]:
         # 1. create and display radar chart
         with st.container(
@@ -105,7 +130,7 @@ with tabs[0]:
             else:
                 st.html("<h1 style='text-align: center;'>レーダーチャート</h1>")
 
-        # 1.5 metric cards for scores
+        # 2. metric cards for scores
         with st.container(
             height=150, horizontal_alignment="center", vertical_alignment="center"):
             if pronunciation_assessment_result is not None:
@@ -113,7 +138,7 @@ with tabs[0]:
             else:
                 st.html("<h1 style='text-align: center;'>スコアカード</h1>")
 
-        # 2. create and display current errors doughnut chart
+        # 3. create and display current errors doughnut chart
         with st.container(
             height=350, horizontal_alignment="center", vertical_alignment="center"
         ):
@@ -137,28 +162,19 @@ with tabs[1]:
                 st.html(
                     "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"
                 )
-    # with ai_col:
-        # with st.container(height=500):
-        #     if pronunciation_assessment_result is not None:
-        #         user_prompt = update_user_prompt(reference_text, lowest_word_phonemes_dict)
-        #         st.session_state.ai_messages.append(
-        #             {"role": "user", "content": user_prompt}
-        #         )
+    with ai_col:
+        with st.container(height=500):
+            if pronunciation_assessment_result is not None:
 
-        #         ai_response = st.write_stream(
-        #             get_ai_feedback(
-        #                 st.session_state.openai_client,
-        #                 st.session_state.ai_messages,
-        #             )
-        #         )
-        #         # write ai feedback in streaming mode
-        #         st.session_state.ai_messages.append(
-        #             {"role": "assistant", "content": ai_response}
-        #         )
-        #     else:
-        #         st.html(
-        #             "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"
-        #         )
+                ai_response = st.write_stream(ai_feedback_generator)
+                # write ai feedback in streaming mode
+                st.session_state.ai_messages.append(
+                    {"role": "assistant", "content": ai_response}
+                )
+            else:
+                st.html(
+                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"
+                )
 
     with st.container(
         height=300, horizontal_alignment="center", vertical_alignment="center"
@@ -206,28 +222,18 @@ with tabs[2]:
             else:
                 st.html("<h2 style='text-align: center;'>詳細スコアの推移</h2>")
 
-        # with st.container(
-        #     height=400, horizontal_alignment="center", vertical_alignment="center"
-        # ):
-        #     if pronunciation_assessment_result is not None:
-        #         summary_prompt = update_summary_prompt(st.session_state.scores_history, st.session_state.errors_history)
-        #         st.session_state.ai_summary_messages.append(
-        #             {"role": "user", "content": summary_prompt}
-        #         )
-
-        #         ai_summary_response = st.write_stream(
-        #             get_ai_feedback(
-        #                 st.session_state.openai_client,
-        #                 st.session_state.ai_summary_messages,
-        #             )
-        #         )
-        #         # write ai feedback in streaming mode
-        #         st.session_state.ai_summary_messages.append(
-        #             {"role": "assistant", "content": ai_summary_response}
-        #         )
-        #     else:
-        #         st.html(
-        #             "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"
-        #         )
+        with st.container(
+            height=400, horizontal_alignment="center", vertical_alignment="center"
+        ):
+            if pronunciation_assessment_result is not None:
+                ai_summary_response = st.write_stream(ai_summary_generator)
+                # write ai feedback in streaming mode
+                st.session_state.ai_summary_messages.append(
+                    {"role": "assistant", "content": ai_summary_response}
+                )
+            else:
+                st.html(
+                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"
+                )
 
 refresh_page_to_remove_ghost(st.session_state)
