@@ -72,28 +72,28 @@ with tabs[0]:
             submitted = st.form_submit_button("練習しよう！")
             if submitted:
                 # Get pronunciation assessment
-                # st.session_state.practice_times += 1
-                # audio_file_path = f"assets/{user}/history/{lesson}-{st.session_state.practice_times}.wav"
-                # save_audio_to_file(audio_bytes_io, filename=audio_file_path)
-                # pronunciation_assessment_result = get_pronunciation_assessment(user, st.session_state.pronunciation_config, reference_text, audio_file_path)
-                # with open(f"assets/{user}/history/{lesson}-{st.session_state.practice_times}.json", "w", encoding="utf-8") as f:
-                #     json.dump(pronunciation_assessment_result, f, ensure_ascii=False, indent=4)
-                # scores_dict, errors_dict, lowest_word_phonemes_dict = parse_pronunciation_assessment(pronunciation_assessment_result)
-                # update_scores_history(st.session_state, scores_dict)
-                # update_errors_history(st.session_state, errors_dict)
-
-                # For testing without re-recording audio
                 st.session_state.practice_times += 1
-                audio_file_path = f"assets/{user}/history/{lesson}-{1}.wav"
-                with open(f"assets/{user}/history/{lesson}-{1}.json", "r", encoding="utf-8") as f:
-                    pronunciation_assessment_result = json.load(f)
-                scores_dict, errors_dict, lowest_word_phonemes_dict = (
-                    parse_pronunciation_assessment(pronunciation_assessment_result)
-                )
+                audio_file_path = f"assets/{user}/history/{lesson}-{st.session_state.practice_times}.wav"
+                save_audio_to_file(audio_bytes_io, filename=audio_file_path)
+                pronunciation_assessment_result = get_pronunciation_assessment(user, st.session_state.pronunciation_config, reference_text, audio_file_path)
+                with open(f"assets/{user}/history/{lesson}-{st.session_state.practice_times}.json", "w", encoding="utf-8") as f:
+                    json.dump(pronunciation_assessment_result, f, ensure_ascii=False, indent=4)
+                scores_dict, errors_dict, lowest_word_phonemes_dict = parse_pronunciation_assessment(pronunciation_assessment_result)
                 update_scores_history(st.session_state, scores_dict)
                 update_errors_history(st.session_state, errors_dict)
 
-                # Get AI feedback and write it streamingly later
+                # For testing without re-recording audio
+                # st.session_state.practice_times += 1
+                # audio_file_path = f"assets/{user}/history/{lesson}-{1}.wav"
+                # with open(f"assets/{user}/history/{lesson}-{1}.json", "r", encoding="utf-8") as f:
+                #     pronunciation_assessment_result = json.load(f)
+                # scores_dict, errors_dict, lowest_word_phonemes_dict = (
+                #     parse_pronunciation_assessment(pronunciation_assessment_result)
+                # )
+                # update_scores_history(st.session_state, scores_dict)
+                # update_errors_history(st.session_state, errors_dict)
+
+                # # Get AI feedback and write it streamingly later
                 user_prompt = update_user_prompt(
                     reference_text, lowest_word_phonemes_dict
                 )
@@ -196,7 +196,7 @@ with tabs[2]:
                 overall_score_chart = plot_overall_score(st.session_state.scores_history)
                 st.altair_chart(overall_score_chart, use_container_width=True)
             else:
-                st.html("<h2 style='text-align: center;'>全体スコアの推移</h2>")
+                st.html("<h1 style='text-align: center;'>全体スコアの推移</h1>")
         with st.container(
             height=400, horizontal_alignment="center", vertical_alignment="center"
         ):
@@ -210,7 +210,7 @@ with tabs[2]:
                 else:
                     st.image("assets/Goodjob_stickman.gif")
             else:
-                st.html("<h2 style='text-align: center;'>総合エラー数</h2>")
+                st.html("<h1 style='text-align: center;'>総合エラー数</h1>")
 
     with inner_cols[1]:
         with st.container(
@@ -220,7 +220,7 @@ with tabs[2]:
                 detail_scores_chart = plot_detail_scores(st.session_state.scores_history)
                 st.altair_chart(detail_scores_chart, use_container_width=True)
             else:
-                st.html("<h2 style='text-align: center;'>詳細スコアの推移</h2>")
+                st.html("<h1 style='text-align: center;'>詳細スコアの推移</h1>")
 
         with st.container(
             height=400, horizontal_alignment="center", vertical_alignment="center"
@@ -237,3 +237,4 @@ with tabs[2]:
                 )
 
 refresh_page_to_remove_ghost(st.session_state)
+ 

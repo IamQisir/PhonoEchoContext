@@ -1093,45 +1093,45 @@ def create_doughnut_chart(data: dict, title: str):
     
     return chart
 
+def _get_metric_value(scores_history: dict, key: str, decimals: int = 1):
+    """Return the latest value and delta rounded to the desired decimals."""
+    values = scores_history.get(key, [])
+    if not values:
+        return 0.0, None
+
+    latest = round(values[-1], decimals)
+    delta = None
+    if len(values) > 1:
+        delta = round(values[-1] - values[-2], decimals)
+    return latest, delta
+
+
 def create_metric_cards(practice_times: int, scores_history: dict):
     metric_card_cols = st.columns(5)
     if practice_times <= 1:
-        metric_card_cols[0].metric("総合スコア", scores_history.get("PronScore", [0])[-1])
-        metric_card_cols[1].metric("正確性", scores_history.get("AccuracyScore", [0])[-1])
-        metric_card_cols[2].metric("流暢性", scores_history.get("FluencyScore", [0])[-1])
-        metric_card_cols[3].metric("完全性", scores_history.get("CompletenessScore", [0])[-1])
-        metric_card_cols[4].metric("韻律", scores_history.get("ProsodyScore", [0])[-1])
+        pron_value, _ = _get_metric_value(scores_history, "PronScore")
+        acc_value, _ = _get_metric_value(scores_history, "AccuracyScore")
+        flu_value, _ = _get_metric_value(scores_history, "FluencyScore")
+        comp_value, _ = _get_metric_value(scores_history, "CompletenessScore")
+        pros_value, _ = _get_metric_value(scores_history, "ProsodyScore")
+
+        metric_card_cols[0].metric("総合スコア", pron_value)
+        metric_card_cols[1].metric("正確性", acc_value)
+        metric_card_cols[2].metric("流暢性", flu_value)
+        metric_card_cols[3].metric("完全性", comp_value)
+        metric_card_cols[4].metric("韻律", pros_value)
     else:
-        metric_card_cols[0].metric(
-            "総合スコア",
-            scores_history.get("PronScore", [0])[-1],
-            delta=scores_history.get("PronScore", [0])[-1]
-            - scores_history.get("PronScore", [0])[-2],
-        )
-        metric_card_cols[1].metric(
-            "正確性",
-            scores_history.get("PronAccuracy", [0])[-1],
-            delta=scores_history.get("PronAccuracy", [0])[-1]
-            - scores_history.get("PronAccuracy", [0])[-2],
-        )
-        metric_card_cols[2].metric(
-            "流暢性",
-            scores_history.get("PronFluency", [0])[-1],
-            delta=scores_history.get("PronFluency", [0])[-1]
-            - scores_history.get("PronFluency", [0])[-2],
-        )
-        metric_card_cols[3].metric(
-            "完全性",
-            scores_history.get("PronCompleteness", [0])[-1],
-            delta=scores_history.get("PronCompleteness", [0])[-1]
-            - scores_history.get("PronCompleteness", [0])[-2],
-        )
-        metric_card_cols[4].metric(
-            "韻律",
-            scores_history.get("PronProsody", [0])[-1],
-            delta=scores_history.get("PronProsody", [0])[-1]
-            - scores_history.get("PronProsody", [0])[-2],
-        )
+        pron_value, pron_delta = _get_metric_value(scores_history, "PronScore")
+        acc_value, acc_delta = _get_metric_value(scores_history, "AccuracyScore")
+        flu_value, flu_delta = _get_metric_value(scores_history, "FluencyScore")
+        comp_value, comp_delta = _get_metric_value(scores_history, "CompletenessScore")
+        pros_value, pros_delta = _get_metric_value(scores_history, "ProsodyScore")
+
+        metric_card_cols[0].metric("総合スコア", pron_value, delta=pron_delta)
+        metric_card_cols[1].metric("正確性", acc_value, delta=acc_delta)
+        metric_card_cols[2].metric("流暢性", flu_value, delta=flu_delta)
+        metric_card_cols[3].metric("完全性", comp_value, delta=comp_delta)
+        metric_card_cols[4].metric("韻律", pros_value, delta=pros_delta)
 
 def test_radar_chart():
     with open(
