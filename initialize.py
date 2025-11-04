@@ -1,7 +1,7 @@
 import streamlit as st
 from openai import AzureOpenAI
 import azure.cognitiveservices.speech as speechsdk
-from data_loader import load_system_prompt
+from data_loader import load_system_prompt, load_participant_sentence_order
 
 
 def reset_page_padding():
@@ -55,7 +55,9 @@ def initialize_session_state(session_state, user:int, lesson: int):
     if "user" not in session_state:
         session_state.user = user
     if "lesson" not in session_state:
-        session_state.lesson = lesson
+        session_state.lesson = lesson   
+    if "sentence_order" not in session_state:
+        session_state.sentence_order = load_participant_sentence_order(session_state.user)
     if "openai_client" not in session_state:
         session_state.openai_client = init_openai_client()
     if "pronunciation_config" not in session_state:
@@ -95,6 +97,7 @@ def initialize_session_state(session_state, user:int, lesson: int):
                 ),
             }
         ]
+
 
 def refresh_page_to_remove_ghost(session_state):
     if "refreshed" not in session_state:

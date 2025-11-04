@@ -26,34 +26,25 @@ from chart import (
     create_metric_cards
 )
 
-def has_pronunciation_errors(error_data: dict) -> bool:
-    """Return True when the error dictionary contains any non-zero entry."""
-    if not error_data:
-        return False
-
-    for value in error_data.values():
-        if isinstance(value, list) and value:
-            return True
-        if isinstance(value, (int, float)) and value > 0:
-            return True
-    return False
-
+from tools import delete_none_ai_history, has_pronunciation_errors
 
 reset_page_padding()
 
 with st.sidebar:
     st.title("PhonoEcho")
-    user = st.number_input("ユーザー番号", min_value=1, max_value=24, value=1, step=1)
-    lesson = st.number_input("レッスン", min_value=1, max_value=4, value=1, step=1)
+    with st.form("user_lesson_form"):
+        user = st.number_input("ユーザー番号", min_value=1, max_value=24, value=1, step=1)
+        lesson = st.number_input("レッスン番号", min_value=1, max_value=4, value=1, step=1)
+        load_new_resources = st.form_submit_button("ロードする")
+        if load_new_resources:
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
 
-initialize_session_state(st.session_state, user, lesson)
+initialize_session_state(st.session_state, user, lesson)                
 
 # Clean up any messages with None content (safety measure)
-if "ai_messages" in st.session_state:
-    st.session_state.ai_messages = [
-        msg for msg in st.session_state.ai_messages 
-        if msg.get("content") is not None
-    ]
+delete_none_ai_history(st.session_state, "ai_messages")
+delete_none_ai_history(st.session_state, "ai_summary_messages")
 
 tabs = st.tabs(["ラーニング", "発音の可視化", "まとめ"])
 
@@ -62,8 +53,8 @@ with tabs[0]:
 
     with cols[0]:
         # load video and text and display
-        load_video(user, lesson)
-        reference_text = load_text(user, lesson)
+        load_video(st.session_state.sentence_order, user, lesson)
+        reference_text = load_text(st.session_state.sentence_order, lesson)
 
         with st.form("audio_input"):
             audio_bytes_io = st.audio_input(f"音声を録音してみよう", sample_rate=48000)
@@ -73,10 +64,11 @@ with tabs[0]:
             if submitted:
                 # Get pronunciation assessment
                 st.session_state.practice_times += 1
-                audio_file_path = f"assets/{user}/history/{lesson}-{st.session_state.practice_times}.wav"
+                audio_file_path = f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.wav"
+                # save_audio_to_file will make sure the directory exists
                 save_audio_to_file(audio_bytes_io, filename=audio_file_path)
                 pronunciation_assessment_result = get_pronunciation_assessment(user, st.session_state.pronunciation_config, reference_text, audio_file_path)
-                with open(f"assets/{user}/history/{lesson}-{st.session_state.practice_times}.json", "w", encoding="utf-8") as f:
+                with open(f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.json", "w", encoding="utf-8") as f:
                     json.dump(pronunciation_assessment_result, f, ensure_ascii=False, indent=4)
                 scores_dict, errors_dict, lowest_word_phonemes_dict = parse_pronunciation_assessment(pronunciation_assessment_result)
                 update_scores_history(st.session_state, scores_dict)
@@ -93,7 +85,7 @@ with tabs[0]:
                 # update_scores_history(st.session_state, scores_dict)
                 # update_errors_history(st.session_state, errors_dict)
 
-                # # Get AI feedback and write it streamingly later
+                # Get AI feedback and write it streamingly later
                 user_prompt = update_user_prompt(
                     reference_text, lowest_word_phonemes_dict
                 )
@@ -237,4 +229,3 @@ with tabs[2]:
                 )
 
 refresh_page_to_remove_ghost(st.session_state)
- 

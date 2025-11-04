@@ -1,19 +1,36 @@
 import streamlit as st
-
-@st.cache_resource
-def load_video(user:int, lesson:int):
-    """Load video file path based on user and lesson."""
-    st.video(f"assets/{user}/resources/{lesson}.mp4")
+import json
 
 @st.cache_data
-def load_text(user:int, lesson:int):
+def load_participant_sentence_order(user: int) -> list:
+    """Load participant sentence order from JSON file."""
+    with open("assets/participant_sentence_order.json", "r", encoding="utf-8") as f:
+        participant_sentence_order = json.load(f)
+    return participant_sentence_order.get(str(user), [])
+
+def determine_avatar_order(user: int) -> list:
+    """Determine avatar order based on user ID."""
+    if user % 2 == 1:
+        return [1, 2, 3, 4]
+    return [1, 3, 2, 4]
+
+@st.cache_data
+def load_video(sentence_order: list, user: int, lesson: int):
+    """Load video file path based on user and lesson."""
+    avatar_order = determine_avatar_order(user)
+    video_path = f"assets/learning_database/{sentence_order[lesson-1]}-{avatar_order[lesson-1]}.mp4"
+    st.video(video_path)
+
+@st.cache_data
+def load_text(sentence_order: list, lesson: int):
     """Load text file content based on user and lesson."""
     txt = ""
-    with open(f"assets/{user}/resources/{lesson}.txt", "r", encoding="utf-8") as f:
+    with open(f"assets/learning_database/{sentence_order[lesson-1]}.txt", "r", encoding="utf-8") as f:
         txt = f.read()
     st.html(f"<h2 style='text-align: center; color: white;'>{txt}</h2>")
     return txt
 
+@DeprecationWarning
 def load_ai_history(user:int, lesson:int):
     """Load AI feedback history for the user."""
     history = []
