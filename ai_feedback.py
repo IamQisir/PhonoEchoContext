@@ -173,7 +173,7 @@ def create_openai_client():
         client = AzureOpenAI(
             azure_endpoint=st.secrets["AzureGPT"]["AZURE_OPENAI_ENDPOINT"],
             api_key=st.secrets["AzureGPT"]["AZURE_OPENAI_API_KEY"],
-            api_version="2025-01-01-preview",
+            api_version="2025-04-14",
         )
     except Exception as e:
         print(f"Error initializing OpenAI client: {e}")
@@ -191,7 +191,7 @@ def get_ai_feedback(client, messages):
     """
     try:
         response = client.chat.completions.create(
-            model="gpt-5-mini",
+            model="gpt-4.1-nano",
             messages=messages,
             stream=True,
         )
