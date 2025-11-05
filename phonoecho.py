@@ -149,7 +149,7 @@ with tabs[1]:
         with st.container(height=500):
             if pronunciation_assessment_result is not None:
                 # this function is under fragment decorator in chart.py
-                create_waveform_plot(user, lesson, st.session_state.practice_times, lowest_word_phonemes_dict, pronunciation_assessment_result)
+                create_waveform_plot(st.session_state.sentence_order, user, lesson, st.session_state.practice_times, lowest_word_phonemes_dict, pronunciation_assessment_result)
             else:
                 st.html(
                     "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"

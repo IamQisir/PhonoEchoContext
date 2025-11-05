@@ -122,12 +122,13 @@ def is_omitted_word(word: dict) -> bool:
     return False
 
 @st.fragment
-def create_waveform_plot(session_state, user, lesson, practice_times, lowest_word_phonemes_dict, pronunciation_result):
+def create_waveform_plot(sentence_order, user, lesson, practice_times, lowest_word_phonemes_dict, pronunciation_result):
     """
     Creates customized regions for waveform visualization using streamlit_advanced_audio.
     Highlights word intervals with colors based on pronunciation accuracy scores.
     
     Args:
+        sentence_order (list): List of sentence IDs in order
         user (int): User ID
         lesson (int): Lesson number
         practice_times (int): Number of practice attempts
@@ -138,7 +139,7 @@ def create_waveform_plot(session_state, user, lesson, practice_times, lowest_wor
         None: Renders audix components directly
     """
     # Load target pronunciation result (reference audio)
-    target_json_path = f"assets/learning_database/{session_state.sentence_order[lesson - 1]}.json"
+    target_json_path = f"assets/learning_database/{sentence_order[lesson - 1]}.json"
     try:
         with open(target_json_path, "r", encoding="utf-8") as f:
             target_result = json.load(f)
@@ -162,31 +163,31 @@ def create_waveform_plot(session_state, user, lesson, practice_times, lowest_wor
     if target_start_end:
         if target_start_end["start_time"] and target_start_end["end_time"] and target_start_end["end_time"] > target_start_end["start_time"]:
             audix(
-                f"assets/learning_database/{session_state.sentence_order[lesson - 1]}.wav",
+                f"assets/learning_database/{sentence_order[lesson - 1]}.wav",
                 key="target",
                 start_time=target_start_end["start_time"],
                 end_time=target_start_end["end_time"]
             )
         else:
-            audix(f"assets/learning_database/{session_state.sentence_order[lesson - 1]}.wav", key="target")
+            audix(f"assets/learning_database/{sentence_order[lesson - 1]}.wav", key="target")
     else:
         st.warning(f"Word '{lowest_word}' not found in target audio timestamps")
-        audix(f"assets/learning_database/{session_state.sentence_order[lesson - 1]}.wav", key="target")
+        audix(f"assets/learning_database/{sentence_order[lesson - 1]}.wav", key="target")
 
     # Display user audio with timestamp if available
     if user_start_end:
         if user_start_end["start_time"] and user_start_end["end_time"] and user_start_end["end_time"] > user_start_end["start_time"]:
             audix(
-                f"assets/history_database/{user}/{lesson}/{practice_times}.wav",
+                f"assets/history_database/{user}/{lesson}-{practice_times}.wav",
                 key="user",
                 start_time=user_start_end["start_time"],
                 end_time=user_start_end["end_time"]
             )
         else:
-            audix(f"assets/history_database/{user}/{lesson}/{practice_times}.wav", key="user")
+            audix(f"assets/history_database/{user}/{lesson}-{practice_times}.wav", key="user")
     else:
         st.warning(f"Word '{lowest_word}' not found in user audio timestamps")
-        audix(f"assets/history_database/{user}/{lesson}/{practice_times}.wav", key="user")
+        audix(f"assets/history_database/{user}/{lesson}-{practice_times}.wav", key="user")
 
 def create_syllable_table(pronunciation_result):
     """
