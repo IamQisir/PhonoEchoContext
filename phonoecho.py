@@ -120,7 +120,7 @@ with tabs[0]:
                 st.session_state["feedback"]["radar_chart"] = radar_chart
                 st.pyplot(radar_chart, width=450)
             else:
-                st.html("<h1 style='text-align: center;'>レーダーチャート</h1>")
+                st.html("<h1 style='text-align: center;'>発音評価レーダーチャート</h1>")
 
         # 2. metric cards for scores
         with st.container(
@@ -128,7 +128,7 @@ with tabs[0]:
             if pronunciation_assessment_result is not None:
                 create_metric_cards(st.session_state.practice_times, st.session_state.scores_history)
             else:
-                st.html("<h1 style='text-align: center;'>スコアカード</h1>")
+                st.html("<h1 style='text-align: center;'>発音スコアのメトリック</h1>")
 
         # 3. create and display current errors doughnut chart
         with st.container(
@@ -136,12 +136,12 @@ with tabs[0]:
         ):
             if pronunciation_assessment_result is not None:
                 if has_pronunciation_errors(errors_dict):
-                    current_errors_chart = create_doughnut_chart(errors_dict, "今回の練習")
+                    current_errors_chart = create_doughnut_chart(errors_dict, "当該練習")
                     st.altair_chart(current_errors_chart, use_container_width=True)
                 else:
                     st.image("assets/Goodjob_stickman.gif")
             else:
-                st.html("<h1 style='text-align: center;'>発音誤りの円グラフ</h1>")
+                st.html("<h1 style='text-align: center;'>発音誤りのドーナツチャート <br>（今回の練習）</h1>")
 
 with tabs[1]:
     waveform_plot_col, ai_col = st.columns([0.6, 0.4])
@@ -152,7 +152,7 @@ with tabs[1]:
                 create_waveform_plot(st.session_state.sentence_order, user, lesson, st.session_state.practice_times, lowest_word_phonemes_dict, pronunciation_assessment_result)
             else:
                 st.html(
-                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"
+                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>発音波形の可視化</h1></div>"
                 )
     with ai_col:
         with st.container(height=500):
@@ -165,7 +165,7 @@ with tabs[1]:
                 )
             else:
                 st.html(
-                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"
+                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AI発音フィードバック</h1></div>"
                 )
 
     with st.container(
@@ -175,7 +175,7 @@ with tabs[1]:
             syllable_table = create_syllable_table(pronunciation_assessment_result)
             st.html(syllable_table)
         else:
-            st.html("<h1 style='text-align: center;'>音節的な発音の統計表</h1>")
+            st.html("<h1 style='text-align: center;'>音節別発音評価統計表</h1>")
 
 with tabs[2]:
     inner_cols = st.columns(2)
@@ -188,7 +188,7 @@ with tabs[2]:
                 overall_score_chart = plot_overall_score(st.session_state.scores_history)
                 st.altair_chart(overall_score_chart, use_container_width=True)
             else:
-                st.html("<h1 style='text-align: center;'>全体スコアの推移</h1>")
+                st.html("<h1 style='text-align: center;'>総合スコアの推移</h1>")
         with st.container(
             height=400, horizontal_alignment="center", vertical_alignment="center"
         ):
@@ -202,7 +202,9 @@ with tabs[2]:
                 else:
                     st.image("assets/Goodjob_stickman.gif")
             else:
-                st.html("<h1 style='text-align: center;'>総合エラー数</h1>")
+                st.html(
+                    "<h1 style='text-align: center;'>発音誤りのドーナツチャート <br>（累積データ）</h1>"
+                )
 
     with inner_cols[1]:
         with st.container(
@@ -212,7 +214,7 @@ with tabs[2]:
                 detail_scores_chart = plot_detail_scores(st.session_state.scores_history)
                 st.altair_chart(detail_scores_chart, use_container_width=True)
             else:
-                st.html("<h1 style='text-align: center;'>詳細スコアの推移</h1>")
+                st.html("<h1 style='text-align: center;'>各スコアの推移</h1>")
 
         with st.container(
             height=400, horizontal_alignment="center", vertical_alignment="center"
@@ -225,7 +227,7 @@ with tabs[2]:
                 )
             else:
                 st.html(
-                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AIフィードバック</h1></div>"
+                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AI総合分析レポート</h1></div>"
                 )
 
 refresh_page_to_remove_ghost(st.session_state)
