@@ -33,7 +33,7 @@ reset_page_padding()
 with st.sidebar:
     st.title("PhonoEcho")
     with st.form("user_lesson_form"):
-        user = st.number_input("ユーザー番号", min_value=1, max_value=24, value=1, step=1)
+        user = st.number_input("ユーザー番号", min_value=0, max_value=24, value=0, step=1)
         lesson = st.number_input("レッスン番号", min_value=1, max_value=4, value=1, step=1)
         load_new_resources = st.form_submit_button("ロードする")
         if load_new_resources:
@@ -63,27 +63,27 @@ with tabs[0]:
             submitted = st.form_submit_button("練習しよう！")
             if submitted:
                 # Get pronunciation assessment
-                # st.session_state.practice_times += 1
-                # audio_file_path = f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.wav"
-                # # save_audio_to_file will make sure the directory exists
-                # save_audio_to_file(audio_bytes_io, filename=audio_file_path)
-                # pronunciation_assessment_result = get_pronunciation_assessment(user, st.session_state.pronunciation_config, reference_text, audio_file_path)
-                # with open(f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.json", "w", encoding="utf-8") as f:
-                #     json.dump(pronunciation_assessment_result, f, ensure_ascii=False, indent=4)
-                # scores_dict, errors_dict, lowest_word_phonemes_dict = parse_pronunciation_assessment(pronunciation_assessment_result)
-                # update_scores_history(st.session_state, scores_dict)
-                # update_errors_history(st.session_state, errors_dict)
-
-                # For testing without re-recording audio
                 st.session_state.practice_times += 1
-                audio_file_path = f"assets/history_database/{user}/{lesson}-{1}.wav"
-                with open(f"assets/history_database/{user}/{lesson}-{1}.json", "r", encoding="utf-8") as f:
-                    pronunciation_assessment_result = json.load(f)
-                scores_dict, errors_dict, lowest_word_phonemes_dict = (
-                    parse_pronunciation_assessment(pronunciation_assessment_result)
-                )
+                audio_file_path = f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.wav"
+                # save_audio_to_file will make sure the directory exists
+                save_audio_to_file(audio_bytes_io, filename=audio_file_path)
+                pronunciation_assessment_result = get_pronunciation_assessment(user, st.session_state.pronunciation_config, reference_text, audio_file_path)
+                with open(f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.json", "w", encoding="utf-8") as f:
+                    json.dump(pronunciation_assessment_result, f, ensure_ascii=False, indent=4)
+                scores_dict, errors_dict, lowest_word_phonemes_dict = parse_pronunciation_assessment(pronunciation_assessment_result)
                 update_scores_history(st.session_state, scores_dict)
                 update_errors_history(st.session_state, errors_dict)
+
+                # For testing without re-recording audio
+                # st.session_state.practice_times += 1
+                # audio_file_path = f"assets/history_database/{user}/{lesson}-{1}.wav"
+                # with open(f"assets/history_database/{user}/{lesson}-{1}.json", "r", encoding="utf-8") as f:
+                #     pronunciation_assessment_result = json.load(f)
+                # scores_dict, errors_dict, lowest_word_phonemes_dict = (
+                #     parse_pronunciation_assessment(pronunciation_assessment_result)
+                # )
+                # update_scores_history(st.session_state, scores_dict)
+                # update_errors_history(st.session_state, errors_dict)
 
                 # Get AI feedback and write it streamingly later
                 user_prompt = update_user_prompt(

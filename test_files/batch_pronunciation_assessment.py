@@ -123,17 +123,17 @@ def process_audio_files(speech_key, speech_region, base_path, file_configs):
 
 def main():
     """Main function to run batch pronunciation assessment."""
-    
+
     # You need to set your Azure credentials here or load from environment/config
     # Option 1: Set directly (NOT recommended for production)
     SPEECH_KEY = "YOUR_SPEECH_KEY_HERE"
     SPEECH_REGION = "YOUR_SPEECH_REGION_HERE"
-    
+
     # Option 2: Load from environment variables (recommended)
     # import os
     # SPEECH_KEY = os.getenv("AZURE_SPEECH_KEY")
     # SPEECH_REGION = os.getenv("AZURE_SPEECH_REGION")
-    
+
     # Option 3: Load from Streamlit secrets (if available)
     try:
         import streamlit as st
@@ -145,34 +145,19 @@ def main():
         if SPEECH_KEY == "YOUR_SPEECH_KEY_HERE":
             print("✗ ERROR: Please configure your Azure Speech credentials in the script!")
             return
-    
+
     # Base path for resources
-    base_path = r"c:\Users\Chyis\Documents\Code\PhonoEchoContext\assets\1\resources"
-    
+    base_path = r"c:\Users\Chyis\Documents\Code\PhonoEchoContext\assets\learning_database"
+
     # Configure files to process
     file_configs = [
-        {
-            'audio_file': '1.wav',
-            'text_file': '1.txt',
-            'output_file': '1.json'
-        },
-        {
-            'audio_file': '2.wav',
-            'text_file': '2.txt',
-            'output_file': '2.json'
-        },
-        {
-            'audio_file': '3.wav',
-            'text_file': '3.txt',
-            'output_file': '3.json'
-        },
-        {
-            'audio_file': '4.wav',
-            'text_file': '4.txt',
-            'output_file': '4.json'
-        }
+        {"audio_file": "s0.wav", "text_file": "s0.txt", "output_file": "s0.json"},
+        # {"audio_file": "1.wav", "text_file": "1.txt", "output_file": "1.json"},
+        # {"audio_file": "2.wav", "text_file": "2.txt", "output_file": "2.json"},
+        # {"audio_file": "3.wav", "text_file": "3.txt", "output_file": "3.json"},
+        # {"audio_file": "4.wav", "text_file": "4.txt", "output_file": "4.json"},
     ]
-    
+
     # Process all files
     process_audio_files(SPEECH_KEY, SPEECH_REGION, base_path, file_configs)
 
