@@ -25,7 +25,6 @@ from chart import (
     plot_detail_scores,
     create_metric_cards
 )
-
 from tools import delete_none_ai_history, has_pronunciation_errors
 
 reset_page_padding()
@@ -40,7 +39,19 @@ with st.sidebar:
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
 
-initialize_session_state(st.session_state, user, lesson)                
+initialize_session_state(st.session_state, user, lesson)
+
+TOTAL_PRACTICE_TIMES = 5
+if st.session_state.practice_times < TOTAL_PRACTICE_TIMES:
+    st.toast(
+        f"まだ{TOTAL_PRACTICE_TIMES - st.session_state.practice_times}回を発音練習しましょう",
+        duration="short",
+    )
+else:
+    st.toast(
+        f"今回の発音練習は完了しました！お疲れ様でした！",
+        duration="long"
+    )
 
 # Clean up any messages with None content (safety measure)
 delete_none_ai_history(st.session_state, "ai_messages")
@@ -120,7 +131,7 @@ with tabs[0]:
                 st.session_state["feedback"]["radar_chart"] = radar_chart
                 st.pyplot(radar_chart, width=450)
             else:
-                st.html("<h1 style='text-align: center;'>発音評価レーダーチャート</h1>")
+                st.html("<h1 style='text-align: center;'>発音評価のレーダーチャート</h1>")
 
         # 2. metric cards for scores
         with st.container(
@@ -141,7 +152,7 @@ with tabs[0]:
                 else:
                     st.image("assets/Goodjob_stickman.gif")
             else:
-                st.html("<h1 style='text-align: center;'>発音誤りのドーナツチャート <br>（今回の練習）</h1>")
+                st.html("<h1 style='text-align: center;'>発音誤りのドーナツチャート <br>（当該練習）</h1>")
 
 with tabs[1]:
     waveform_plot_col, ai_col = st.columns([0.6, 0.4])
@@ -175,7 +186,7 @@ with tabs[1]:
             syllable_table = create_syllable_table(pronunciation_assessment_result)
             st.html(syllable_table)
         else:
-            st.html("<h1 style='text-align: center;'>音節別発音評価統計表</h1>")
+            st.html("<h1 style='text-align: center;'>音節別の発音評価統計表</h1>")
 
 with tabs[2]:
     inner_cols = st.columns(2)
