@@ -74,27 +74,27 @@ with tabs[0]:
             submitted = st.form_submit_button("練習しよう！")
             if submitted:
                 # Get pronunciation assessment
-                st.session_state.practice_times += 1
-                audio_file_path = f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.wav"
-                # save_audio_to_file will make sure the directory exists
-                save_audio_to_file(audio_bytes_io, filename=audio_file_path)
-                pronunciation_assessment_result = get_pronunciation_assessment(user, st.session_state.pronunciation_config, reference_text, audio_file_path)
-                with open(f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.json", "w", encoding="utf-8") as f:
-                    json.dump(pronunciation_assessment_result, f, ensure_ascii=False, indent=4)
-                scores_dict, errors_dict, lowest_word_phonemes_dict = parse_pronunciation_assessment(pronunciation_assessment_result)
-                update_scores_history(st.session_state, scores_dict)
-                update_errors_history(st.session_state, errors_dict)
-
-                # For testing without re-recording audio
                 # st.session_state.practice_times += 1
-                # audio_file_path = f"assets/history_database/{user}/{lesson}-{1}.wav"
-                # with open(f"assets/history_database/{user}/{lesson}-{1}.json", "r", encoding="utf-8") as f:
-                #     pronunciation_assessment_result = json.load(f)
-                # scores_dict, errors_dict, lowest_word_phonemes_dict = (
-                #     parse_pronunciation_assessment(pronunciation_assessment_result)
-                # )
+                # audio_file_path = f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.wav"
+                # # save_audio_to_file will make sure the directory exists
+                # save_audio_to_file(audio_bytes_io, filename=audio_file_path)
+                # pronunciation_assessment_result = get_pronunciation_assessment(user, st.session_state.pronunciation_config, reference_text, audio_file_path)
+                # with open(f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.json", "w", encoding="utf-8") as f:
+                #     json.dump(pronunciation_assessment_result, f, ensure_ascii=False, indent=4)
+                # scores_dict, errors_dict, lowest_word_phonemes_dict = parse_pronunciation_assessment(pronunciation_assessment_result)
                 # update_scores_history(st.session_state, scores_dict)
                 # update_errors_history(st.session_state, errors_dict)
+
+                # For testing without re-recording audio
+                st.session_state.practice_times += 1
+                audio_file_path = f"assets/history_database/{user}/{lesson}-{1}.wav"
+                with open(f"assets/history_database/{user}/{lesson}-{1}.json", "r", encoding="utf-8") as f:
+                    pronunciation_assessment_result = json.load(f)
+                scores_dict, errors_dict, lowest_word_phonemes_dict = (
+                    parse_pronunciation_assessment(pronunciation_assessment_result)
+                )
+                update_scores_history(st.session_state, scores_dict)
+                update_errors_history(st.session_state, errors_dict)
 
                 # Get AI feedback and write it streamingly later
                 user_prompt = update_user_prompt(
@@ -139,7 +139,7 @@ with tabs[0]:
             if pronunciation_assessment_result is not None:
                 create_metric_cards(st.session_state.practice_times, st.session_state.scores_history)
             else:
-                st.html("<h1 style='text-align: center;'>発音スコアのメトリック</h1>")
+                st.html("<h1 style='text-align: center;'>発音スコアの比較</h1>")
 
         # 3. create and display current errors doughnut chart
         with st.container(
@@ -152,21 +152,23 @@ with tabs[0]:
                 else:
                     st.image("assets/Goodjob_stickman.gif")
             else:
-                st.html("<h1 style='text-align: center;'>発音誤りのドーナツチャート <br>（当該練習）</h1>")
+                st.html("<h1 style='text-align: center;'>発音誤りのドーナツチャート</h1>")
 
 with tabs[1]:
-    waveform_plot_col, ai_col = st.columns([0.6, 0.4])
-    with waveform_plot_col:
-        with st.container(height=500):
-            if pronunciation_assessment_result is not None:
-                # this function is under fragment decorator in chart.py
-                create_waveform_plot(st.session_state.sentence_order, user, lesson, st.session_state.practice_times, lowest_word_phonemes_dict, pronunciation_assessment_result)
-            else:
-                st.html(
-                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>発音波形の可視化</h1></div>"
-                )
+    with st.container(
+        height=300, horizontal_alignment="center", vertical_alignment="center"
+    ):
+        if pronunciation_assessment_result is not None:
+            syllable_table = create_syllable_table(pronunciation_assessment_result)
+            st.html(syllable_table)
+        else:
+            st.html("<h1 style='text-align: center;'>音節別の発音評価統計表</h1>")
+
+    ai_col, waveform_plot_col = st.columns([0.4, 0.6])
     with ai_col:
-        with st.container(height=500):
+        with st.container(
+            height=500, horizontal_alignment="center", vertical_alignment="center"
+        ):
             if pronunciation_assessment_result is not None:
 
                 ai_response = st.write_stream(ai_feedback_generator)
@@ -178,15 +180,16 @@ with tabs[1]:
                 st.html(
                     "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AI発音フィードバック</h1></div>"
                 )
+    with waveform_plot_col:
+        with st.container(height=500):
+            if pronunciation_assessment_result is not None:
+                # this function is under fragment decorator in chart.py
+                create_waveform_plot(st.session_state.sentence_order, user, lesson, st.session_state.practice_times, lowest_word_phonemes_dict, pronunciation_assessment_result)
+            else:
+                st.html(
+                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>発音波形の可視化</h1></div>"
+                )
 
-    with st.container(
-        height=300, horizontal_alignment="center", vertical_alignment="center"
-    ):
-        if pronunciation_assessment_result is not None:
-            syllable_table = create_syllable_table(pronunciation_assessment_result)
-            st.html(syllable_table)
-        else:
-            st.html("<h1 style='text-align: center;'>音節別の発音評価統計表</h1>")
 
 with tabs[2]:
     inner_cols = st.columns(2)
@@ -238,7 +241,7 @@ with tabs[2]:
                 )
             else:
                 st.html(
-                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AI総合分析レポート</h1></div>"
+                    "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AI総合評価</h1></div>"
                 )
 
 refresh_page_to_remove_ghost(st.session_state)
