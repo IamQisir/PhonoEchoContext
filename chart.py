@@ -215,12 +215,21 @@ def create_syllable_table(pronunciation_result):
             background-color: #0E1117;
             border-radius: 8px;
             padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            margin: 0 auto;
         }}
         .scoreboard {{
             display: inline-flex;
             flex-wrap: nowrap;
             gap: 0;
             margin-bottom: 14px;
+            justify-content: center;
+            align-items: center;
         }}
         .score-card {{
             display: flex;
@@ -265,6 +274,7 @@ def create_syllable_table(pronunciation_result):
             font-size: 14px;
             background-color: #0E1117;
             color: white;
+            margin: 0 auto;
         }}
         .eval-table td {{
             border: 2px solid #555;

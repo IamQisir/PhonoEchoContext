@@ -98,7 +98,6 @@ def initialize_session_state(session_state, user:int, lesson: int):
             }
         ]
 
-
 def refresh_page_to_remove_ghost(session_state):
     if "refreshed" not in session_state:
         session_state.refreshed = True

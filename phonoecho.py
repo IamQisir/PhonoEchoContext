@@ -42,16 +42,6 @@ with st.sidebar:
 initialize_session_state(st.session_state, user, lesson)
 
 TOTAL_PRACTICE_TIMES = 5
-if st.session_state.practice_times < TOTAL_PRACTICE_TIMES:
-    st.toast(
-        f"まだ{TOTAL_PRACTICE_TIMES - st.session_state.practice_times}回を発音練習しましょう",
-        duration="short",
-    )
-else:
-    st.toast(
-        f"今回の発音練習は完了しました！お疲れ様でした！",
-        duration="long"
-    )
 
 # Clean up any messages with None content (safety measure)
 delete_none_ai_history(st.session_state, "ai_messages")
@@ -243,5 +233,15 @@ with tabs[2]:
                 st.html(
                     "<div style='display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px;'><h1 style='text-align: center;'>AI総合評価</h1></div>"
                 )
+    # display the toast message about practice times
+    if pronunciation_assessment_result:
+        if st.session_state.practice_times < TOTAL_PRACTICE_TIMES:
+            st.info(
+                f"あと{TOTAL_PRACTICE_TIMES - st.session_state.practice_times}回、発音練習をしましょう",
+            )
+        else:
+            st.success(
+                f"今回の発音練習は完了しました！お疲れ様でした！"
+            )
 
 refresh_page_to_remove_ghost(st.session_state)
