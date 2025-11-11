@@ -35,7 +35,7 @@ def get_pronunciation_assessment_batch(speech_key, speech_region, reference_text
             reference_text=reference_text,
             grading_system=speechsdk.PronunciationAssessmentGradingSystem.HundredMark,
             granularity=speechsdk.PronunciationAssessmentGranularity.Phoneme,
-            enable_miscue=False
+            enable_miscue=True
         )
         pronunciation_config.enable_prosody_assessment()
         pronunciation_config.phoneme_alphabet = "IPA"
@@ -147,11 +147,14 @@ def main():
             return
 
     # Base path for resources
-    base_path = r"c:\Users\Chyis\Documents\Code\PhonoEchoContext\assets\learning_database"
+    # base_path = r"c:\Users\Chyis\Documents\Code\PhonoEchoContext\assets\learning_database"
+    base_path = (
+        r"c:\Users\Chyis\Documents\Code\PhonoEchoContext\assets\history_database\0"
+    )
 
     # Configure files to process
     file_configs = [
-        {"audio_file": "s0.wav", "text_file": "s0.txt", "output_file": "s0.json"},
+        {"audio_file": "1-1.wav", "text_file": "s0.txt", "output_file": "s0.json"},
         # {"audio_file": "1.wav", "text_file": "1.txt", "output_file": "1.json"},
         # {"audio_file": "2.wav", "text_file": "2.txt", "output_file": "2.json"},
         # {"audio_file": "3.wav", "text_file": "3.txt", "output_file": "3.json"},

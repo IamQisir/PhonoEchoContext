@@ -45,7 +45,7 @@ def initialize_azure():
         reference_text="",
         grading_system=speechsdk.PronunciationAssessmentGradingSystem.HundredMark,
         granularity=speechsdk.PronunciationAssessmentGranularity.Phoneme,
-        enable_miscue=False)
+        enable_miscue=True)
     pronunciation_config.enable_prosody_assessment()
     pronunciation_config.phoneme_alphabet = "IPA"
     return pronunciation_config

@@ -53,7 +53,7 @@ def get_color(score):
 
 ERROR_TYPE_LABELS_JA = {
     "omission": "省略",
-    "mispronunciation": "発音誤り",
+    "mispronunciation": "発音エラー",
     "insertion": "挿入",
     "none": "問題なし",
     "unknown": "不明",
@@ -1064,10 +1064,9 @@ def create_doughnut_chart(data: dict, title: str):
         {
             "Key": key,
             "Label": ERROR_TYPE_LABELS_JA.get(key, key.title()),
-            "Count": processed_counts[key],
+            "Count": processed_counts.get(key, 0),
         }
         for key in ERROR_CHART_ORDER
-        if key in processed_counts
     ]
 
     if not records:
