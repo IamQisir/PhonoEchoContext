@@ -88,6 +88,8 @@ def initialize_session_state(session_state, user:int, lesson: int):
             "syllable_table": None,
             "pron_score": None,
         }
+    if "audio_input_prev" not in session_state:
+        session_state.audio_input_prev = None
     if "ai_summary_messages" not in session_state:
         session_state.ai_summary_messages = [
             {

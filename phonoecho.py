@@ -1,5 +1,6 @@
 ﻿import streamlit as st
 import pandas as pd
+from time import sleep
 import json
 from initialize import (
     reset_page_padding,
@@ -58,11 +59,22 @@ with tabs[0]:
         reference_text = load_text(st.session_state.sentence_order, lesson)
 
         with st.form("audio_input"):
-            audio_bytes_io = st.audio_input(f"音声を録音してみよう", sample_rate=48000)
+            prev_audio_bytes_io = st.session_state.audio_input_prev
+            audio_bytes_io = st.audio_input("音声を録音してみよう", sample_rate=48000)
+            st.session_state.audio_input_prev = audio_bytes_io
             pronunciation_assessment_result = None
 
             submitted = st.form_submit_button("練習しよう！")
             if submitted:
+                if audio_bytes_io is None:
+                    st.warning("まずは録音してください。")
+                    sleep(3)
+                    st.rerun()
+                if prev_audio_bytes_io is not None and audio_bytes_io == prev_audio_bytes_io:
+                    st.warning("前回の録音ではなく、新しく録音してください。")
+                    sleep(3)
+                    st.rerun()
+
                 # Get pronunciation assessment
                 st.session_state.practice_times += 1
                 audio_file_path = f"assets/history_database/{user}/{lesson}-{st.session_state.practice_times}.wav"

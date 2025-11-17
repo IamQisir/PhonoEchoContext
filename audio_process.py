@@ -1,11 +1,12 @@
 from datetime import datetime
 import soundfile as sf
 import os
+import streamlit as st
 
 def save_audio_to_file(audio_bytes_io, filename=None):
     """Save audio data from BytesIO to a WAV file."""
     if audio_bytes_io is None:
-        raise ValueError("No audio data provided")
+        return
     
     if filename is None:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -17,6 +18,7 @@ def save_audio_to_file(audio_bytes_io, filename=None):
     # Write the bytes directly to file
     with open(filename, 'wb') as f:
         f.write(audio_bytes_io.getvalue())
+    return filename
 
 def extract_timestamps_from_pronunciation_result(pronunciation_result):
     """
