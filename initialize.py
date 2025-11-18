@@ -95,7 +95,7 @@ def initialize_session_state(session_state, user:int, lesson: int):
             {
                 "role": "system",
                 "content": load_system_prompt(
-                    "assets/system_prompt/feedback_system_prompt.txt"
+                    "assets/system_prompt/summary_system_prompt.txt"
                 ),
             }
         ]

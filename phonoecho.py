@@ -255,5 +255,5 @@ with tabs[2]:
             st.success(
                 f"今回の発音練習は完了しました！お疲れ様でした！"
             )
-
+            
 refresh_page_to_remove_ghost(st.session_state)

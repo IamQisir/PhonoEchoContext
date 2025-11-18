@@ -98,6 +98,7 @@ def update_summary_prompt(scores_history, errors_history):
         {"error_type": key, "count": value} for key, value in errors_history.items()
     ]
 
+    attempt_count = len(scores_timeline)
     structured_summary_json = json.dumps(
         {"scores_timeline": scores_timeline, "errors_summary": errors_summary},
         ensure_ascii=False,
@@ -106,15 +107,17 @@ def update_summary_prompt(scores_history, errors_history):
 
     summary_prompt = (
         "あなたは system prompt で定義された「学習者の発音成績サマライザー」です。"
-        "以下の JSON データだけを根拠に、助言なし・事実ベースで 3 段落（成果ハイライト／推移の要約／停滞・ばらつき観測）を作成してください。\n"
+        "以下の JSON データだけを根拠に、Score Snapshot / Progress Insights / Encouragement の3段落を日本語敬体で作成してください。"
+        "1レッスンあたり最大5回の練習が行われます。今回は"
+        f"{attempt_count}回の記録があります。\n"
         "### 参照データ(JSON)\n"
         "```json\n"
         f"{structured_summary_json}\n"
         "```\n"
         "### 執筆ルール\n"
-        "1. 各段落で具体的な数値（最初と最新、最大/最小、practice_index）を引用し、差分は整数・または1桁小数で示す。\n"
-        "2. `scores_timeline` が2件未満なら「データが限られているため長期推移の判断は保留」と明記してから分かる範囲を記述する。\n"
-        "3. 停滞判定は直近3回で変化が ±2 未満の指標を対象とし、該当がなければ「顕著な停滞なし」と書く。\n"
-        "4. `errors_summary` は件数の多い順に最大2件まで触れる。値が0のときは誤りが見られない旨を述べる。\n"
+        "1. Score Snapshot: 最新 practice_index の overall / Accuracy / Fluency / Completeness / Prosody から有意な指標を選び、具体的な得点と最高値を紹介する。\n"
+        "2. Progress Insights: `scores_timeline` が2件以上なら最初と最新、または直近2回の差分を整数（必要なら1桁小数）で記述し、上下動の要因は推測せずにデータだけで述べる。1件のみでも「初回記録として〜」と肯定的に説明し、「データ不足」という表現は使わない。\n"
+        "3. Encouragement: `errors_summary` の多い順に最大1件触れつつ、今回の頑張りや次回への期待を励ましの言葉で締める。練習法や指示は書かない。\n"
+        "4. `scores_timeline` が空のときのみ「記録がまだありません」と述べ、それ以外では数値に必ず触れる。\n"
     )
     return summary_prompt
