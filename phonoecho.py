@@ -100,7 +100,7 @@ with tabs[0]:
 
                 # Get AI feedback and write it streamingly later
                 user_prompt = update_user_prompt(
-                    reference_text, lowest_word_phonemes_dict
+                    reference_text, lowest_word_phonemes_dict, errors_dict
                 )
                 st.session_state.ai_messages.append(
                     {"role": "user", "content": user_prompt}

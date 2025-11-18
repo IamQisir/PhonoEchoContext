@@ -289,7 +289,9 @@ def create_syllable_table(pronunciation_result):
             display: inline-flex;
             flex-wrap: nowrap;
             gap: 0;
-            width: 100%;
+            justify-content: center;
+            width: fit-content;
+            margin: 0 auto;
         }}
         .word-card {{
             display: flex;
@@ -371,7 +373,9 @@ def create_syllable_table(pronunciation_result):
             display: inline-flex;
             flex-wrap: nowrap;
             gap: 0;
-            width: 100%;
+            justify-content: center;
+            width: fit-content;
+            margin: 0 auto;
         }}
         .error-card {{
             flex: 0 0 auto;

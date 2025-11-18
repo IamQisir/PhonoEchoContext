@@ -1,5 +1,7 @@
 import streamlit as st
 import json
+from typing import Optional
+from tools import has_pronunciation_errors
 
 @st.cache_data
 def load_participant_sentence_order(user: int) -> list:
@@ -49,14 +51,33 @@ def load_system_prompt(file_path: str = "system_prompt.txt"):
     
     return system_prompt
 
-def update_user_prompt(sentence, lowest_word_phonemes: dict):
-    """Update user prompt based on lowest scoring words and phonemes."""
+def update_user_prompt(sentence, lowest_word_phonemes: dict, errors_dict: Optional[dict] = None):
+    """
+    Update user prompt based on detected errors.
+    
+    Prefers phoneme-level insight (lowest_word_phonemes). If that is not
+    available but Azure still reports word-level mistakes (e.g., omission
+    or insertion only), we pass a summarized error payload so the AI never
+    congratulates the learner incorrectly.
+    """
     sentence_text = (sentence or "").strip()
-    phoneme_payload = (
-        lowest_word_phonemes
-        if lowest_word_phonemes
-        else {"status": "no_detected_errors", "note": "音素エラーは検出されていません"}
-    )
+    errors_dict = errors_dict or {}
+    if lowest_word_phonemes:
+        phoneme_payload = lowest_word_phonemes
+    elif has_pronunciation_errors(errors_dict):
+        condensed_errors = {
+            key: value for key, value in errors_dict.items() if value
+        }
+        phoneme_payload = {
+            "status": "word_errors_detected",
+            "error_summary": condensed_errors,
+            "note": "音素エラーは抽出できませんでしたが、上記の語レベル誤りが検出されています。",
+        }
+    else:
+        phoneme_payload = {
+            "status": "no_detected_errors",
+            "note": "音素エラーは検出されていません",
+        }
     phoneme_payload_json = json.dumps(phoneme_payload, ensure_ascii=False, indent=2)
 
     user_prompt = (
